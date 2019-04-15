@@ -4,9 +4,12 @@ import org.apache.log4j.Logger;
 
 public class MonitorConfiguration {
 
-    private static MonitorConfiguration instance = null;
     private static Logger logger = Logger.getLogger(MonitorConfiguration.class);
+
+    private static MonitorConfiguration instance = null;
+
     private int timeWindowCount;
+
     private int timeWindowLength;
 
     /**

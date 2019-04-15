@@ -29,6 +29,8 @@ import java.util.Set;
 import java.util.logging.Logger;
 
 /**
+ * Original AuroraHeronShellController
+ *
  * Implementation of AuroraController that is a wrapper of AuroraCLIController.
  * The difference is `restart` command:
  * 1. restart whole topology: delegate to AuroraCLIController
@@ -39,89 +41,89 @@ import java.util.logging.Logger;
  * while delegating to AuroraCLIController for all the other scenarios.
  */
 class AuroraHeronShellController implements AuroraController {
-  private static final Logger LOG = Logger.getLogger(AuroraHeronShellController.class.getName());
+    private static final Logger LOG = Logger.getLogger(AuroraHeronShellController.class.getName());
 
-  private final String topologyName;
-  private final AuroraCLIController cliController;
-  private final SchedulerStateManagerAdaptor stateMgrAdaptor;
+    private final String topologyName;
+    private final AuroraCLIController cliController;
+    private final SchedulerStateManagerAdaptor stateMgrAdaptor;
 
-  AuroraHeronShellController(String jobName, String cluster, String role, String env,
-      String auroraFilename, boolean isVerbose, Config localConfig)
-      throws ClassNotFoundException, InstantiationException, IllegalAccessException {
-    this.topologyName = jobName;
-    this.cliController =
-        new AuroraCLIController(jobName, cluster, role, env, auroraFilename, isVerbose);
+    AuroraHeronShellController(String jobName, String cluster, String role, String env,
+                               String auroraFilename, boolean isVerbose, Config localConfig)
+            throws ClassNotFoundException, InstantiationException, IllegalAccessException {
+        this.topologyName = jobName;
+        this.cliController =
+                new AuroraCLIController(jobName, cluster, role, env, auroraFilename, isVerbose);
 
-    Config config = Config.toClusterMode(localConfig);
-    String stateMgrClass = Context.stateManagerClass(config);
-    IStateManager stateMgr = ReflectionUtils.newInstance(stateMgrClass);
-    stateMgr.initialize(config);
-    stateMgrAdaptor = new SchedulerStateManagerAdaptor(stateMgr, 5000);
-  }
-
-  @Override
-  public boolean createJob(Map<AuroraField, String> bindings) {
-    return cliController.createJob(bindings);
-  }
-
-  @Override
-  public boolean killJob() {
-    return cliController.killJob();
-  }
-
-  private StMgr searchContainer(Integer id) {
-    String prefix = "stmgr-" + id;
-    for (StMgr sm : stateMgrAdaptor.getPhysicalPlan(topologyName).getStmgrsList()) {
-      if (sm.getId().equals(prefix)) {
-        return sm;
-      }
-    }
-    return null;
-  }
-
-  // Restart an aurora container
-  @Override
-  public boolean restart(Integer containerId) {
-    // there is no backpressure for container 0, delegate to aurora client
-    if (containerId == null || containerId == 0) {
-      return cliController.restart(containerId);
+        Config config = Config.toClusterMode(localConfig);
+        String stateMgrClass = Context.stateManagerClass(config);
+        IStateManager stateMgr = ReflectionUtils.newInstance(stateMgrClass);
+        stateMgr.initialize(config);
+        stateMgrAdaptor = new SchedulerStateManagerAdaptor(stateMgr, 5000);
     }
 
-    if (stateMgrAdaptor == null) {
-      LOG.warning("SchedulerStateManagerAdaptor not initialized");
-      return false;
+    @Override
+    public boolean createJob(Map<AuroraField, String> bindings) {
+        return cliController.createJob(bindings);
     }
 
-    StMgr sm = searchContainer(containerId);
-    if (sm == null) {
-      LOG.warning("container not found in pplan " + containerId);
-      return false;
+    @Override
+    public boolean killJob() {
+        return cliController.killJob();
     }
 
-    String url = "http://" + sm.getHostName() + ":" + sm.getShellPort() + "/killexecutor";
-    String payload = "secret=" + stateMgrAdaptor.getExecutionState(topologyName).getTopologyId();
-    LOG.info("sending `kill container` to " + url + "; payload: " + payload);
-
-    HttpURLConnection con = NetworkUtils.getHttpConnection(url);
-    try {
-      if (NetworkUtils.sendHttpPostRequest(con, "X", payload.getBytes())) {
-        return NetworkUtils.checkHttpResponseCode(con, 200);
-      } else { // if heron-shell command fails, delegate to aurora client
-        LOG.info("heron-shell killexecutor failed; try aurora client ..");
-        return cliController.restart(containerId);
-      }
-    } finally {
-      con.disconnect();
+    private StMgr searchContainer(Integer id) {
+        String prefix = "stmgr-" + id;
+        for (StMgr sm : stateMgrAdaptor.getPhysicalPlan(topologyName).getStmgrsList()) {
+            if (sm.getId().equals(prefix)) {
+                return sm;
+            }
+        }
+        return null;
     }
-  }
 
-  @Override
-  public void removeContainers(Set<PackingPlan.ContainerPlan> containersToRemove) {
-    cliController.removeContainers(containersToRemove);
-  }
+    // Restart an aurora container
+    @Override
+    public boolean restart(Integer containerId) {
+        // there is no backpressure for container 0, delegate to aurora client
+        if (containerId == null || containerId == 0) {
+            return cliController.restart(containerId);
+        }
 
-  @Override
-  public Set<Integer> addContainers(Integer count) {
-    return cliController.addContainers(count);
-  }
+        if (stateMgrAdaptor == null) {
+            LOG.warning("SchedulerStateManagerAdaptor not initialized");
+            return false;
+        }
+
+        StMgr sm = searchContainer(containerId);
+        if (sm == null) {
+            LOG.warning("container not found in pplan " + containerId);
+            return false;
+        }
+
+        String url = "http://" + sm.getHostName() + ":" + sm.getShellPort() + "/killexecutor";
+        String payload = "secret=" + stateMgrAdaptor.getExecutionState(topologyName).getTopologyId();
+        LOG.info("sending `kill container` to " + url + "; payload: " + payload);
+
+        HttpURLConnection con = NetworkUtils.getHttpConnection(url);
+        try {
+            if (NetworkUtils.sendHttpPostRequest(con, "X", payload.getBytes())) {
+                return NetworkUtils.checkHttpResponseCode(con, 200);
+            } else { // if heron-shell command fails, delegate to aurora client
+                LOG.info("heron-shell killexecutor failed; try aurora client ..");
+                return cliController.restart(containerId);
+            }
+        } finally {
+            con.disconnect();
+        }
+    }
+
+    @Override
+    public void removeContainers(Set<PackingPlan.ContainerPlan> containersToRemove) {
+        cliController.removeContainers(containersToRemove);
+    }
+
+    @Override
+    public Set<Integer> addContainers(Integer count) {
+        return cliController.addContainers(count);
+    }
 }

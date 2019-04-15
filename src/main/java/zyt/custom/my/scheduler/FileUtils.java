@@ -45,7 +45,7 @@ public class FileUtils {
     }
 
     /**
-     * From storm beachmark
+     * From storm benchmark
      *
      * @param parent file path
      * @param name   filename

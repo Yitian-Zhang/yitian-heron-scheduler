@@ -21,33 +21,34 @@ import com.twitter.heron.spi.scheduler.ILauncher;
 import com.twitter.heron.spi.scheduler.IScheduler;
 
 /**
+ * Original Aurora Launcher
+ *
  * Launch topology locally to Aurora.
  */
-
 public class AuroraLauncher implements ILauncher {
-  private Config config;
-  private Config runtime;
+    private Config config;
+    private Config runtime;
 
-  @Override
-  public void initialize(Config mConfig, Config mRuntime) {
-    this.config = mConfig;
-    this.runtime = mRuntime;
-  }
+    @Override
+    public void initialize(Config mConfig, Config mRuntime) {
+        this.config = mConfig;
+        this.runtime = mRuntime;
+    }
 
-  @Override
-  public void close() {
+    @Override
+    public void close() {
 
-  }
+    }
 
-  @Override
-  public boolean launch(PackingPlan packing) {
-    LauncherUtils launcherUtils = LauncherUtils.getInstance();
-    Config ytruntime = launcherUtils.createConfigWithPackingDetails(runtime, packing);
-    return launcherUtils.onScheduleAsLibrary(config, ytruntime, getScheduler(), packing);
-  }
+    @Override
+    public boolean launch(PackingPlan packing) {
+        LauncherUtils launcherUtils = LauncherUtils.getInstance();
+        Config ytruntime = launcherUtils.createConfigWithPackingDetails(runtime, packing);
+        return launcherUtils.onScheduleAsLibrary(config, ytruntime, getScheduler(), packing);
+    }
 
-  // Get AuroraScheduler
-  protected IScheduler getScheduler() {
-    return new AuroraScheduler();
-  }
+    // Get AuroraScheduler
+    protected IScheduler getScheduler() {
+        return new AuroraScheduler();
+    }
 }

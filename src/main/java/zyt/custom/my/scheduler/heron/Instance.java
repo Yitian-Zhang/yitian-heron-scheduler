@@ -1,7 +1,9 @@
 package zyt.custom.my.scheduler.heron;
 
 public class Instance {
+
     private Integer instanceId;
+
     private Long workLoad;
 
     public Instance(Integer instanceId, Long workLoad) {

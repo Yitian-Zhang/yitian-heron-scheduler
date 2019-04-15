@@ -1,9 +1,21 @@
 package zyt.custom.my.scheduler;
 
 public class TaskPair {
-    private final int sourceTaskId; // source task id
-    private final int destinationTaskId; // destination task id
-    private final String toString; // return to string formed: [sourceTaskId -> DestinationTaskId]
+
+    /**
+     * source task id
+     */
+    private final int sourceTaskId;
+
+    /**
+     * destination task id
+     */
+    private final int destinationTaskId;
+
+    /**
+     * return to string formed: [sourceTaskId -> DestinationTaskId]
+     */
+    private final String toString;
 
     /**
      * Constructor

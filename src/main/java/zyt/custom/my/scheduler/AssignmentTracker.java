@@ -5,21 +5,26 @@ import org.apache.log4j.Logger;
 
 import java.util.*;
 
+/**
+ * Useless for now
+ */
 public class AssignmentTracker {
 
-    // containerid -> list<taskid>
+    /**
+     * containerid -> list<taskid>
+     */
     private Map<Integer, List<String>> lastAssignment;
+
     private Logger logger = Logger.getLogger(AssignmentTracker.class);
 
-
     public void checkAssignment(PackingPlan packingPlan) {
-
         Map<Integer, List<String>> assignment = new HashMap<>();
-
         // get packing plan id. unused
         String packingPlanId = packingPlan.getId();
+
         // get containerplan map
         Map<Integer, PackingPlan.ContainerPlan> containerPlanMap = packingPlan.getContainersMap();
+
         for (Integer containerId : containerPlanMap.keySet()) {
             // get current container plan
             PackingPlan.ContainerPlan containerPlan = containerPlanMap.get(containerId);
@@ -47,7 +52,6 @@ public class AssignmentTracker {
 //                DataManager.getInstance().storeAssignment()
             }
         }
-
     }
 
     private boolean assignmentAreEqual(Map<Integer, List<String>> a1, Map<Integer, List<String>> a2) {
@@ -55,18 +59,22 @@ public class AssignmentTracker {
             return false;
 
         for (Integer containerId : a1.keySet()) {
-            if (!a2.keySet().contains(containerId))
+            if (!a2.keySet().contains(containerId)) {
                 return false;
+            }
 
             List<String> t1 = a1.get(containerId);
             List<String> t2 = a2.get(containerId);
 
-            if (t1.size() != t2.size())
+            if (t1.size() != t2.size()) {
                 return false;
+            }
 
-            for (String instance : t1)
-                if (!t2.contains(instance))
+            for (String instance : t1) {
+                if (!t2.contains(instance)) {
                     return false;
+                }
+            }
         }
         return true;
     }

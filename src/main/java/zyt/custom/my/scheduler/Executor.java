@@ -1,14 +1,26 @@
 package zyt.custom.my.scheduler;
 
 /**
- * Executor -> Heron what?????
+ * Executor -> Heron Instance
+ * One executor include one task, so the beginTask equals the endTask.
  */
 public class Executor {
+
     private int beginTask;
+
     private int endTask;
-    private long load; //
-    private String node; // ececutor in which work node
-    private String topologyId; // topology
+
+    private long load;
+
+    /**
+     * the ececutor in which work node
+     */
+    private String node;
+
+    /**
+     * the executor in which topology
+     */
+    private String topologyId;
 
     public Executor() {
         this(-1, -1);
@@ -45,17 +57,22 @@ public class Executor {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
+        }
+        if (obj == null) {
             return false;
-        if (getClass() != obj.getClass())
+        }
+        if (getClass() != obj.getClass()) {
             return false;
+        }
         Executor other = (Executor) obj;
-        if (beginTask != other.beginTask)
+        if (beginTask != other.beginTask) {
             return false;
-        if (endTask != other.endTask)
+        }
+        if (endTask != other.endTask) {
             return false;
+        }
         return true;
     }
 

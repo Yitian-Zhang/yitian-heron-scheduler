@@ -1,10 +1,9 @@
-package zyt.custom.cpuinfo;
+package zyt.custom.test.cpuinfo;
 
-public class Test {
+import zyt.custom.cpuinfo.CPUInfo;
 
-	/**
-	 * @param args
-	 */
+public class CPUInfoTest {
+
 	public static void main(String[] args) throws Exception {
 		
 		System.out.println("Number of cores: " + CPUInfo.getInstance().getNumberOfCores());

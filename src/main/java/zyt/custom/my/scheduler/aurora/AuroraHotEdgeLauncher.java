@@ -21,10 +21,9 @@ import com.twitter.heron.spi.scheduler.ILauncher;
 import com.twitter.heron.spi.scheduler.IScheduler;
 
 /**
- * ****************************************
- * 2018-07-03 add for AuroraCustomScheuduler
- *      important file in heron config: scheduler.yaml file
- * ****************************************
+ * AuroraCustomScheuduler
+ * Add: 2018-07-03
+ * Important file in heron config: scheduler.yaml file
  */
 public class AuroraHotEdgeLauncher implements ILauncher {
     private Config config;

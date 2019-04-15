@@ -14,6 +14,7 @@
 
 package zyt.custom.my.scheduler.aurora;
 
+import com.google.common.base.Optional;
 import com.twitter.heron.api.generated.TopologyAPI;
 import com.twitter.heron.api.utils.TopologyUtils;
 import com.twitter.heron.api.utils.Utils;
@@ -31,25 +32,34 @@ import com.twitter.heron.spi.scheduler.IScalable;
 import com.twitter.heron.spi.scheduler.IScheduler;
 import com.twitter.heron.spi.statemgr.SchedulerStateManagerAdaptor;
 import zyt.custom.my.scheduler.FileUtils;
-import com.google.common.base.Optional;
 
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/**
+ * AuroraCustomScheduler
+ * Built by Yitian
+ */
 public class AuroraCustomScheduler implements IScheduler, IScalable {
+
     private static final Logger LOG = Logger.getLogger(AuroraLauncher.class.getName());
 
+    private static final String FILE_NAME = "/home/yitian/logs/aurora-scheduler/aurora-scheduler.txt";
+
     private Config config;
+
     private Config runtime;
+
     private AuroraController controller;
+
     private UpdateTopologyManager updateTopologyManager;
 
-    // 0718 for rescheduler-core --------------------------------------------------------------
+    // 20180718 for rescheduler-core --------------------------------------------------------------
     private AuroraSchedulerController schedulerController;
+
     private TopologyAPI.Topology topology;
-    private static String filename = "/home/yitian/logs/aurora-scheduler/aurora-scheduler.txt";
     // ----------------------------------------------------------------------------------------
 
     @Override
@@ -185,14 +195,15 @@ public class AuroraCustomScheduler implements IScheduler, IScalable {
 
     /**
      * For rescheduler-core
+     *
      * @param request udpateRequest
      * @return
      */
     @Override
     public boolean onUpdate(Scheduler.UpdateTopologyRequest request) {
-        FileUtils.writeToFile(filename, "--------------IN SCHEDULER ONUPDATE FUNCTION START--------------");
+        FileUtils.writeToFile(FILE_NAME, "--------------IN SCHEDULER ONUPDATE FUNCTION START--------------");
         SchedulerStateManagerAdaptor adaptor = Runtime.schedulerStateManagerAdaptor(this.runtime);
-        FileUtils.writeToFile(filename, "This runtime adaptor is: " + adaptor.toString());
+        FileUtils.writeToFile(FILE_NAME, "This runtime adaptor is: " + adaptor.toString());
         try {
             updateTopologyManager.updateTopology(
                     request.getCurrentPackingPlan(), request.getProposedPackingPlan());
@@ -200,7 +211,7 @@ public class AuroraCustomScheduler implements IScheduler, IScalable {
             LOG.log(Level.SEVERE, "Could not update topology for request: " + request, e);
             return false;
         }
-        FileUtils.writeToFile(filename, "--------------IN SCHEDULER ONUPDATE FUNCTION END--------------");
+        FileUtils.writeToFile(FILE_NAME, "--------------IN SCHEDULER ONUPDATE FUNCTION END--------------");
         return true;
     }
 

@@ -36,6 +36,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/**
+ * Original Aurora scheduler
+ */
 public class AuroraScheduler implements IScheduler, IScalable {
     private static final Logger LOG = Logger.getLogger(AuroraLauncher.class.getName());
 

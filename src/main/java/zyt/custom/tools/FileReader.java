@@ -34,7 +34,8 @@ public class FileReader implements Serializable {
     private int limit = 0;
 
     /**
-     * this file will be loacated this project classpath that is resources file in maven project
+     * this file will be located this project classpath that is resources file in maven project
+     *
      * @param file
      */
     public FileReader(String file) {

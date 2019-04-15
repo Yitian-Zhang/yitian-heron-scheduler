@@ -19,19 +19,24 @@ import java.util.Map;
 import java.util.Set;
 
 /**
+ * Original AuroraController
+ *
  * Interface that defines how a client interacts with aurora to control the job lifecycle
  */
 public interface AuroraController {
 
-  boolean createJob(Map<AuroraField, String> auroraProperties);
-  boolean killJob();
+    boolean createJob(Map<AuroraField, String> auroraProperties);
 
-  /**
-   * Restarts a given container, or the entire job if containerId is null
-   * @param containerId ID of container to restart, or entire job if null
-   */
-  boolean restart(Integer containerId);
+    boolean killJob();
 
-  void removeContainers(Set<PackingPlan.ContainerPlan> containersToRemove);
-  Set<Integer> addContainers(Integer count);
+    /**
+     * Restarts a given container, or the entire job if containerId is null
+     *
+     * @param containerId ID of container to restart, or entire job if null
+     */
+    boolean restart(Integer containerId);
+
+    void removeContainers(Set<PackingPlan.ContainerPlan> containersToRemove);
+
+    Set<Integer> addContainers(Integer count);
 }

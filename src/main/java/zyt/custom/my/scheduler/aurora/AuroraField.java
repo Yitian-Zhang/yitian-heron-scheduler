@@ -14,20 +14,22 @@
 package zyt.custom.my.scheduler.aurora;
 
 /**
+ * Original AuroraFiled
+ *
  * Field names passed to aurora controllers during job creation
  */
 public enum AuroraField {
-  CLUSTER,
-  CORE_PACKAGE_URI,
-  CPUS_PER_CONTAINER,
-  DISK_PER_CONTAINER,
-  ENVIRON,
-  EXECUTOR_BINARY,
-  NUM_CONTAINERS,
-  RAM_PER_CONTAINER,
-  ROLE,
-  TIER,
-  TOPOLOGY_ARGUMENTS,
-  TOPOLOGY_NAME,
-  TOPOLOGY_PACKAGE_URI
+    CLUSTER,
+    CORE_PACKAGE_URI,
+    CPUS_PER_CONTAINER,
+    DISK_PER_CONTAINER,
+    ENVIRON,
+    EXECUTOR_BINARY,
+    NUM_CONTAINERS,
+    RAM_PER_CONTAINER,
+    ROLE,
+    TIER,
+    TOPOLOGY_ARGUMENTS,
+    TOPOLOGY_NAME,
+    TOPOLOGY_PACKAGE_URI
 }
