@@ -5,27 +5,32 @@ import org.apache.log4j.Logger;
 public class MonitorConfiguration {
 
     private static MonitorConfiguration instance = null;
+    private static Logger logger = Logger.getLogger(MonitorConfiguration.class);
     private int timeWindowCount;
     private int timeWindowLength;
-    private Logger logger;
 
     /**
      * load configuration from properties file
      */
     private MonitorConfiguration() {
-        logger = Logger.getLogger(MonitorConfiguration.class);
-
-        // load configuration from file
         logger.debug("Loading configuration from file!");
-        // ----
-//        Properties properties = new Properties();
-//            properties.load(new FileInputStream(""));
-//            timeWindowCount = Integer.parseInt(properties.getProperty(""));
-//            timeWindowLength = Integer.parseInt(properties.getProperty(""));
-        timeWindowCount = 3; // ?????
-        timeWindowLength = 5; //
+        timeWindowCount = 3;
+        timeWindowLength = 5;
+
+        // Will to do: load configuration from file
+        /*
+        Properties properties = new Properties();
+        properties.load(new FileInputStream(""));
+        timeWindowCount = Integer.parseInt(properties.getProperty(""));
+        timeWindowLength = Integer.parseInt(properties.getProperty(""));
+        */
     }
 
+    /**
+     * Singal model for creating an instance
+     *
+     * @return
+     */
     public synchronized static MonitorConfiguration getInstance() {
         if (instance == null)
             instance = new MonitorConfiguration();

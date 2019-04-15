@@ -18,15 +18,17 @@ public class Utils {
     }
 
     /**
-     *
+     * convert collection to string for printing
      * @param list
      * @return the list in csv format
      */
     public static String collectionToString(Collection<?> list) {
-        if (list == null)
+        if (list == null) {
             return "null";
-        if (list.isEmpty())
+        }
+        if (list.isEmpty()) {
             return "<empty list>";
+        }
         StringBuffer stringBuffer = new StringBuffer();
         int i = 0;
         for (Object item : list) {

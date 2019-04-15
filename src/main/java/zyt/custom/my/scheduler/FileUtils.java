@@ -7,7 +7,8 @@ import java.util.List;
 
 public class FileUtils {
 
-    private FileUtils() {}
+    private FileUtils() {
+    }
 
     /**
      * Write content to file
@@ -45,8 +46,9 @@ public class FileUtils {
 
     /**
      * From storm beachmark
+     *
      * @param parent file path
-     * @param name filename
+     * @param name   filename
      * @return PrintWriter
      */
     public static PrintWriter createFileWriter(String parent, String name) {
@@ -68,6 +70,7 @@ public class FileUtils {
 
     /**
      * get current time for write content to file
+     *
      * @return time string
      */
     private static String getCurrentTime() {
@@ -79,6 +82,7 @@ public class FileUtils {
     /**
      * copy from storm benchmark FileUtils.java
      * 2018-10-12
+     *
      * @param input
      * @return
      */
@@ -104,6 +108,7 @@ public class FileUtils {
 
     /**
      * read lines of file without blank lines
+     *
      * @param input
      * @return
      */
@@ -129,6 +134,11 @@ public class FileUtils {
         return lines;
     }
 
+    /**
+     * Unit test
+     *
+     * @param args
+     */
     public static void main(String[] args) {
         String filename = "/home/yitian/logs/latency/aurora/latency-monitor.txt";
 //        String filename = "C:\\Users\\Administrator\\Desktop\\heron latency\\text.txt";

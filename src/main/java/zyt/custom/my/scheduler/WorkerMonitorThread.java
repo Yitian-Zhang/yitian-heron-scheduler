@@ -2,10 +2,14 @@ package zyt.custom.my.scheduler;
 
 public class WorkerMonitorThread extends Thread {
 
-//    private static int timeWindowLength = 10;
+    /**
+     * current timeWindowLength = 10
+     */
     private static int timeWindowLength = MonitorConfiguration.getInstance().getTimeWindowLength();
 
-    // Thread start in WorkerMonitor construction function.
+    /**
+     * Thread start in WorkerMonitor construction function.
+     */
     @Override
     public void run() {
         while (true) {

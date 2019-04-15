@@ -9,33 +9,66 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class TaskMonitor {
+
     private Logger logger = Logger.getLogger(WorkerMonitor.class);
-    private final int taskId; // this task id
-    private long threadId; // this task -> thread id, checkThreadId to set it
-    // add from yitian 2018-04-29 ------------------------------
+
+    /**
+     * This task id
+     */
+    private final int taskId;
+
+    /**
+     * This task -> thread id, checkThreadId to set it
+     */
+    private long threadId;
+
+    /**
+     * Add from yitian 2018-04-29
+     * java process id
+     */
     private String processId;
-    // ---------------------------------------------------------
-    private int timeWindowLength; // slotLength -> timeLength: ms.
-    private long lastCheck; // last check time
-    // map source task id -> number of tuples sent by source to this task
+
+    private int timeWindowLength;
+
+    /**
+     * Last check time
+     */
+    private long lastCheck;
+
+    /**
+     * Map source task id -> number of tuples sent by source to this task
+     */
     private Map<Integer, Integer> trafficStatMap;
-    // return map
+
+    /**
+     * Map for returning
+     */
     private Map<Integer, Integer> trafficStatToReturn;
 
     /**
      * Constructer function
      * set task id, and init threadId = -1, it will be changed at checkThreadId function
+     *
      * @param taskId
      */
     public TaskMonitor(int taskId) {
         this.taskId = taskId;
         threadId = -1;
-        // add from yitian 2018-04-29 ------------------------------
+        // add from yitian 2018-04-29
         processId = "";
-        // ---------------------------------------------------------
-//        timeLength = 3 * 1000; // 3 s
-        timeWindowLength = MonitorConfiguration.getInstance().getTimeWindowLength() * 1000; // 10s
+        timeWindowLength = MonitorConfiguration.getInstance().getTimeWindowLength() * 1000;
         trafficStatMap = new HashMap<Integer, Integer>();
+    }
+
+    /**
+     * Add from yitian 2018-04-29
+     * Get java process id for this thread
+     * @return processId
+     */
+    private static String getCurrentJVMProcessId() {
+        RuntimeMXBean runtimeMXBean = ManagementFactory.getRuntimeMXBean();
+        System.out.println("Current jvm name is: " + runtimeMXBean.getName());
+        return runtimeMXBean.getName().split("@")[0];
     }
 
     /**
@@ -44,40 +77,39 @@ public class TaskMonitor {
      */
     public void checkThreadId() {
         if (threadId == -1) {
-            threadId = Thread.currentThread().getId(); // get current thread id
-            // add from yitian 2018-04-29 ------------------------------
+            // get current thread id
+            threadId = Thread.currentThread().getId();
+            // add from yitian 2018-04-29
             processId = getCurrentJVMProcessId();
-            // ---------------------------------------------------------
             // should registerTask (this function located at WorkerMonitor.java)
             WorkerMonitor.getInstance().registerTask(this);
         }
     }
 
-    // add from yitian 2018-04-29 ------------------------------
-    private static String getCurrentJVMProcessId() {
-        RuntimeMXBean runtimeMXBean = ManagementFactory.getRuntimeMXBean();
-        System.out.println("Current jvm name is: " + runtimeMXBean.getName());
-        return runtimeMXBean.getName().split("@")[0];
-    }
-    // ---------------------------------------------------------
-
     /**
      * Storm Brench mark: WordCount bolt execute function invoke
+     *
      * @param tuple current execute tuple
      */
     public void notifyTupleReceived(Tuple tuple) {
-//        logger.info("Invoking nofifyTupleReceived function...");
-        checkThreadId(); // checkThreadId and register this taskMonitor object to WorkMonitor
-        int sourceTaskId = tuple.getSourceTask(); // can get this value in heron
-        Integer traffic = trafficStatMap.get(sourceTaskId); // get number tuple sent from source to this task
-        if (traffic == null)
-            traffic = 0;
-        trafficStatMap.put(sourceTaskId, ++traffic); // record sourceTask traffic
+        // checkThreadId and register this taskMonitor object to WorkMonitor
+        checkThreadId();
 
-        long now = System.currentTimeMillis(); // get current time
-        if (lastCheck == 0)
-            lastCheck = now; // record last check time
-        if (now - lastCheck >= timeWindowLength) { // if the result > slotLength =  timeWindowLength
+        // get number tuple sent from source to this task and record it to trafficStatMap (can get sourceTaskId in heron)
+        int sourceTaskId = tuple.getSourceTask();
+        Integer traffic = trafficStatMap.get(sourceTaskId);
+        if (traffic == null) {
+            traffic = 0;
+        }
+        trafficStatMap.put(sourceTaskId, ++traffic);
+
+        // get current time and record last check time
+        long now = System.currentTimeMillis();
+        if (lastCheck == 0) {
+            lastCheck = now;
+        }
+        // if the result > slotLength = timeWindowLength
+        if (now - lastCheck >= timeWindowLength) {
             synchronized (this) {
                 trafficStatToReturn = trafficStatMap;
                 trafficStatMap = new HashMap<Integer, Integer>();
@@ -102,5 +134,7 @@ public class TaskMonitor {
         return threadId;
     }
 
-    public String getProcessId() { return processId; }
+    public String getProcessId() {
+        return processId;
+    }
 }
