@@ -17,21 +17,21 @@ import com.twitter.heron.common.basics.ByteAmount;
 
 public final class ExampleResources {
 
-  public static final long COMPONENT_RAM_MB = 512;
+    public static final long COMPONENT_RAM_MB = 512;
 
-  static ByteAmount getComponentRam() {
-    return ByteAmount.fromMegabytes(COMPONENT_RAM_MB);
-  }
+    static ByteAmount getComponentRam() {
+        return ByteAmount.fromMegabytes(COMPONENT_RAM_MB);
+    }
 
-  public static ByteAmount getContainerDisk(int components, int containers) {
-    return ByteAmount.fromGigabytes(Math.max(components / containers, 1));
-  }
+    public static ByteAmount getContainerDisk(int components, int containers) {
+        return ByteAmount.fromGigabytes(Math.max(components / containers, 1));
+    }
 
-  public static ByteAmount getContainerRam(int components, int containers) {
-    final int componentsPerContainer = Math.max(components / containers, 1);
-    return ByteAmount.fromMegabytes(COMPONENT_RAM_MB * componentsPerContainer);
-  }
+    public static ByteAmount getContainerRam(int components, int containers) {
+        final int componentsPerContainer = Math.max(components / containers, 1);
+        return ByteAmount.fromMegabytes(COMPONENT_RAM_MB * componentsPerContainer);
+    }
 
-  private ExampleResources() {
-  }
+    private ExampleResources() {
+    }
 }
