@@ -26,7 +26,7 @@ public class DataManager {
     /**
      * WIN: D:\\Intellij Workspaces\\heron-java-streamlet-api-example-master\\src\\resources\\dbcp.properties
      */
-    private static final String DBCP_CONFIG_FILE = "/home/yitian/heronIdea/heron-java-streamlet-api-example-master/src/resources/dbcp.properties";
+    private static final String DBCP_CONFIG_FILE = "dbcp.properties";
 
     // 2018-05-15 add to doSchedulerTest1 function in this class
     private static long lastRescheduling;

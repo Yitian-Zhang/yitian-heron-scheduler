@@ -12,10 +12,14 @@ import java.util.Map;
 public class CPUInfo {
 
     private static final String CPU_INFO_FILE = "/proc/cpuinfo";
+
     @SuppressWarnings("unused")
     private static final String DEBUG_CPU_INFO_FILE = "d:/cpuinfo.txt";
+
     private static CPUInfo instance = null;
+
     private Map<Integer, CoreInfo> cores; // coreInfo in CPU
+
     private long totalSpeed; // Cpu totalspeed
 
     /**

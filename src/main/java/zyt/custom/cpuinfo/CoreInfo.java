@@ -6,7 +6,9 @@ package zyt.custom.cpuinfo;
 public class CoreInfo {
 
     public static final String ID_PROPERTY = "processor";
+
     public static final String MODEL_NAME_PROPERTY = "model name";
+
     public static final String SPEED_PROPERTY = "cpu MHz";
 
     private final int id;
