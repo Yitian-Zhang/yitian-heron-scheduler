@@ -1,8 +1,8 @@
 package zyt.custom.test;
 
 import org.apache.log4j.Logger;
-import zyt.custom.my.scheduler.FileUtils;
-import zyt.custom.my.scheduler.Utils;
+import zyt.custom.tools.FileUtils;
+import zyt.custom.tools.Utils;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;

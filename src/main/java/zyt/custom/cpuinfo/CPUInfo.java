@@ -36,7 +36,7 @@ public class CPUInfo {
     }
 
     /**
-     * 同步创建一个CpuInfo的实例
+     * synchronized create an instance
      *
      * @return
      */

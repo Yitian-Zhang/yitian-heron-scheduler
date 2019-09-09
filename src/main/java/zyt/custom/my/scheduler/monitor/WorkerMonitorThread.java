@@ -1,4 +1,7 @@
-package zyt.custom.my.scheduler;
+package zyt.custom.my.scheduler.monitor;
+
+import zyt.custom.my.scheduler.MonitorConfiguration;
+import zyt.custom.my.scheduler.monitor.WorkerMonitor;
 
 public class WorkerMonitorThread extends Thread {
 

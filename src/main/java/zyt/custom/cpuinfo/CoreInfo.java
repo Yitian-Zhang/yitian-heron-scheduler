@@ -12,7 +12,9 @@ public class CoreInfo {
     public static final String SPEED_PROPERTY = "cpu MHz";
 
     private final int id;
+
     private final String modelName;
+
     private final long speed;
 
     public CoreInfo(int id, String modelName, long speed) {

@@ -12,21 +12,20 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-package zyt.custom.topology.aurora;
+package zyt.custom.topology.aurora.examples;
 
 import com.twitter.heron.api.Config;
 import com.twitter.heron.api.HeronSubmitter;
 import com.twitter.heron.api.bolt.BaseRichBolt;
 import com.twitter.heron.api.bolt.OutputCollector;
-import com.twitter.heron.api.metric.GlobalMetrics;
 import com.twitter.heron.api.topology.IUpdatable;
 import com.twitter.heron.api.topology.OutputFieldsDeclarer;
 import com.twitter.heron.api.topology.TopologyBuilder;
 import com.twitter.heron.api.topology.TopologyContext;
 import com.twitter.heron.api.tuple.Tuple;
 import com.twitter.heron.common.basics.ByteAmount;
-import zyt.custom.my.scheduler.TaskMonitor;
-import zyt.custom.my.scheduler.WorkerMonitor;
+import zyt.custom.my.scheduler.monitor.TaskMonitor;
+import zyt.custom.my.scheduler.monitor.WorkerMonitor;
 import zyt.custom.topology.aurora.spout.TestWordSpout;
 
 import java.time.Duration;

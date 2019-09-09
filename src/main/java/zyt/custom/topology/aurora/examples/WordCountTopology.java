@@ -12,8 +12,9 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-package zyt.custom.topology.aurora;
+package zyt.custom.topology.aurora.examples;
 
+import api.heron.example.ExampleResources;
 import com.twitter.heron.api.Config;
 import com.twitter.heron.api.HeronSubmitter;
 import com.twitter.heron.api.bolt.BaseRichBolt;
@@ -29,7 +30,9 @@ import com.twitter.heron.api.tuple.Fields;
 import com.twitter.heron.api.tuple.Tuple;
 import com.twitter.heron.api.tuple.Values;
 import com.twitter.heron.common.basics.ByteAmount;
-import zyt.custom.my.scheduler.LatencyMonitor;
+import zyt.custom.my.scheduler.monitor.LatencyMonitor;
+import zyt.custom.my.scheduler.monitor.TaskMonitor;
+import zyt.custom.my.scheduler.monitor.WorkerMonitor;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -37,19 +40,21 @@ import java.util.Random;
 import java.util.UUID;
 
 /**
- * This is a WordCountTopology that does simple word counts.
+ * This is a topology that does simple word counts.
  * <p>
- * In this WordCountTopology,
+ * In this topology,
  * 1. the spout task generate a set of random words during initial "open" method.
  * (~128k words, 20 chars per word)
  * 2. During every "nextTuple" call, each spout simply picks a word at random and emits it
  * 3. Spouts use a fields grouping for their output, and each spout could send tuples to
- * every other bolt in the WordCountTopology
+ * every other bolt in the topology
  * 4. Bolts maintain an in-memory map, which is keyed by the word emitted by the spouts,
  * and updates the count when it receives a tuple.
+ *
+ * updated: 2018-09-12
  */
-public final class AuroraWordCountLatencyTopology {
-    private AuroraWordCountLatencyTopology() {
+public final class WordCountTopology {
+    private WordCountTopology() {
     }
 
     /**
@@ -57,40 +62,44 @@ public final class AuroraWordCountLatencyTopology {
      */
     public static void main(String[] args) throws AlreadyAliveException, InvalidTopologyException {
         if (args.length < 1) {
-            throw new RuntimeException("Specify WordCountTopology name");
+            throw new RuntimeException("Specify topology name");
         }
 
-        int parallelism = 2; // modified
+        int parallelism = 1;
         if (args.length > 1) {
             parallelism = Integer.parseInt(args[1]);
         }
-        // 创建TopologyBuilder
         TopologyBuilder builder = new TopologyBuilder();
-        builder.setSpout("word", new WordSpout(), parallelism);
-        builder.setBolt("consumer", new ConsumerBolt(), parallelism).fieldsGrouping("word", new Fields("word"));
-//        builder.setBolt("acking", new AckingBolt(), 2).fieldsGrouping("consumer", new Fields("consumer"));
-
-        // 创建Config对象
+        builder.setSpout("word", new WordSpout(), 4); // default parallelism
+        builder.setBolt("consumer", new ConsumerBolt(), 7)
+                .fieldsGrouping("word", new Fields("word")); // default parallelism
         Config conf = new Config();
-        conf.setNumStmgrs(1); // default=parallelism
+        conf.setNumStmgrs(3); // changed this value for RR algorithm
 
-        // config可以配置的内容
-        conf.setMaxSpoutPending(1000);
-        conf.setMessageTimeoutSecs(10);
-        conf.setDebug(true);
-        conf.setTopologyReliabilityMode(Config.TopologyReliabilityMode.ATLEAST_ONCE);
+        // 2018-09-12 add for benchmark4**********************************************
+        conf.setMaxSpoutPending(1000); // modified for latency
+        conf.setMessageTimeoutSecs(60); // modified for latency
+        conf.setTopologyReliabilityMode(Config.TopologyReliabilityMode.ATLEAST_ONCE); // latency shows config
+        // ***************************************************************************
 
         // configure component resources
-        conf.setComponentRam("word", ByteAmount.fromMegabytes(ExampleResources.COMPONENT_RAM_MB));
-        conf.setComponentRam("consumer", ByteAmount.fromMegabytes(ExampleResources.COMPONENT_RAM_MB));
-//        conf.setComponentRam("acking", ByteAmount.fromMegabytes(ExampleResources.COMPONENT_RAM_MB)); // set ackingblot ram
+        conf.setComponentRam("word",
+                ByteAmount.fromMegabytes(ExampleResources.COMPONENT_RAM_MB)); // 512mb
+        conf.setComponentRam("consumer",
+                ByteAmount.fromMegabytes(ExampleResources.COMPONENT_RAM_MB)); // 512mb
 
         // configure container resources
-        conf.setContainerDiskRequested(
-                ExampleResources.getContainerDisk(2 * parallelism, parallelism)); // 4G -> 2
-        conf.setContainerRamRequested(
-                ExampleResources.getContainerRam(2 * parallelism, parallelism)); // 2G 在计算topology所需资源的时候，这里的container数量需要+1
-        conf.setContainerCpuRequested(2); // default=2
+//        conf.setContainerDiskRequested(
+//                ExampleResources.getContainerDisk(2 * parallelism, parallelism)); // 2G
+//        conf.setContainerRamRequested(
+//                ExampleResources.getContainerRam(2 * parallelism, parallelism)); // 1G
+//        conf.setContainerCpuRequested(2); // 2cores
+
+        // 2018-9-10 changed it for mesos rescource allocation test
+        // this configuration is the max value of an container
+        conf.setContainerDiskRequested(ByteAmount.fromGigabytes(3)); // 6G
+        conf.setContainerRamRequested(ByteAmount.fromGigabytes(3)); // 4G
+        conf.setContainerCpuRequested(2); // 4
 
         HeronSubmitter.submitTopology(args[0], conf, builder.createTopology());
     }
@@ -98,7 +107,9 @@ public final class AuroraWordCountLatencyTopology {
     // Utils class to generate random String at given length
     public static class RandomString {
         private final char[] symbols;
+
         private final Random random = new Random();
+
         private final char[] buf;
 
         public RandomString(int length) {
@@ -107,13 +118,16 @@ public final class AuroraWordCountLatencyTopology {
             for (char ch = '0'; ch <= '9'; ++ch) {
                 tmp.append(ch);
             }
+
             for (char ch = 'a'; ch <= 'z'; ++ch) {
                 tmp.append(ch);
             }
+
             symbols = tmp.toString().toCharArray();
             if (length < 1) {
                 throw new IllegalArgumentException("length < 1: " + length);
             }
+
             buf = new char[length];
         }
 
@@ -121,6 +135,7 @@ public final class AuroraWordCountLatencyTopology {
             for (int idx = 0; idx < buf.length; ++idx) {
                 buf[idx] = symbols[random.nextInt(symbols.length)];
             }
+
             return new String(buf);
         }
     }
@@ -130,40 +145,45 @@ public final class AuroraWordCountLatencyTopology {
      */
     public static class WordSpout extends BaseRichSpout {
         private static final long serialVersionUID = 4322775001819135036L;
+
         private static final int ARRAY_LENGTH = 128 * 1024;
         private static final int WORD_LENGTH = 20;
+
         private final String[] words = new String[ARRAY_LENGTH];
+
         private final Random rnd = new Random(31);
+
         private SpoutOutputCollector collector;
 
+        // deployed load monitor -------------------------------------------------------
+        private TaskMonitor taskMonitor;
+        // -----------------------------------------------------------------------------
         // deployed latency monitor ------------------------
         private long spoutStartTime;
         private int taskId;
         private Map<String,Long> startTimeMap;
         // -------------------------------------------------
 
-
         @Override
         public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
             outputFieldsDeclarer.declare(new Fields("word"));
         }
 
-        /**
-         * 需要在spout的open和nextTuple方法中调用负载监视器，
-         * 用于在一定的时间窗口内，收集各进程占用的CPU，内存和网络资源负载信息，以及各进程之间的数据流大小
-         *
-         * @param map
-         * @param topologyContext
-         * @param spoutOutputCollector
-         */
         @Override
         @SuppressWarnings("rawtypes")
         public void open(Map map, TopologyContext topologyContext,
                          SpoutOutputCollector spoutOutputCollector) {
+
+            // deployed load monitor -------------------------------------------------------
+            WorkerMonitor.getInstance().setContextInfo(topologyContext); // start thread and set topology (check topology)
+            taskMonitor = new TaskMonitor(topologyContext.getThisTaskId());
+            // -----------------------------------------------------------------------------
+
             RandomString randomString = new RandomString(WORD_LENGTH);
             for (int i = 0; i < ARRAY_LENGTH; i++) {
                 words[i] = randomString.nextString();
             }
+
             collector = spoutOutputCollector;
             // deployed latency monitor ------------------------
             // get taskid from topologycontext
@@ -178,12 +198,14 @@ public final class AuroraWordCountLatencyTopology {
         }
         // -------------------------------------------------
 
+
         @Override
         public void nextTuple() {
-            // default
 //            int nextInt = rnd.nextInt(ARRAY_LENGTH);
-//            collector.emit(new Values(words[nextInt]), generateUUID()); // acking
-
+//            collector.emit(new Values(words[nextInt]));
+            // deployed load monitor -------------------------------------------------------
+            taskMonitor.checkThreadId();
+            // -----------------------------------------------------------------------------
             // deployed latency monitor ------------------------
             spoutStartTime = System.currentTimeMillis(); // record spout start time
             // latency monitor using:
@@ -197,24 +219,20 @@ public final class AuroraWordCountLatencyTopology {
             // -----------------------------------------------------------
         }
 
-
-
-        /**
-         * @param msgId
-         */
+        @Override
         public void ack(Object msgId) {
             // deployed latency monitor ------------------------
             String messageId = (String) msgId; // message id
             long startTime = startTimeMap.get(messageId);
             startTimeMap.remove(messageId);
+
+            // compute spout latency
             long latency = System.currentTimeMillis() - startTime;
             LatencyMonitor.getInstance().setContent(String.valueOf(taskId), latency);
             // -------------------------------------------------
         }
 
-        /**
-         * @param msgId
-         */
+        @Override
         public void fail(Object msgId) {
         }
     }
@@ -228,14 +246,28 @@ public final class AuroraWordCountLatencyTopology {
         private OutputCollector collector;
         private Map<String, Integer> countMap;
 
+        // deployed load monitor -------------------------------------------------------
+        private TaskMonitor taskMonitor;
+        // -----------------------------------------------------------------------------
+
+
         @SuppressWarnings("rawtypes")
         public void prepare(Map map, TopologyContext topologyContext, OutputCollector outputCollector) {
+
+            // deployed load monitor -------------------------------------------------------
+            WorkerMonitor.getInstance().setContextInfo(topologyContext);
+            taskMonitor = new TaskMonitor(topologyContext.getThisTaskId());
+            // -----------------------------------------------------------------------------
             collector = outputCollector;
             countMap = new HashMap<String, Integer>();
         }
 
         @Override
         public void execute(Tuple tuple) {
+            // deployed load monitor -------------------------------------------------------
+            taskMonitor.notifyTupleReceived(tuple);
+            // -----------------------------------------------------------------------------
+
             String key = tuple.getString(0);
             if (countMap.get(key) == null) {
                 countMap.put(key, 1);
@@ -243,9 +275,9 @@ public final class AuroraWordCountLatencyTopology {
                 Integer val = countMap.get(key);
                 countMap.put(key, ++val);
             }
-            // deployed latency monitor ------------------------
+            // -------------------------------
             collector.ack(tuple);
-            // -------------------------------------------------
+            // -------------------------------
         }
 
         @Override

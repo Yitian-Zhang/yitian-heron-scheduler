@@ -1,4 +1,4 @@
-package zyt.custom.my.scheduler;
+package zyt.custom.my.scheduler.monitor;
 
 import zyt.custom.cpuinfo.CPUInfo;
 

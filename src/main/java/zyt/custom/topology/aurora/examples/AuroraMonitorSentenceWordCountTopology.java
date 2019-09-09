@@ -12,7 +12,7 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-package zyt.custom.topology.aurora;
+package zyt.custom.topology.aurora.examples;
 
 import com.twitter.heron.api.Config;
 import com.twitter.heron.api.HeronSubmitter;
@@ -29,9 +29,9 @@ import com.twitter.heron.api.tuple.Fields;
 import com.twitter.heron.api.tuple.Tuple;
 import com.twitter.heron.api.tuple.Values;
 import com.twitter.heron.common.basics.ByteAmount;
-import zyt.custom.my.scheduler.LatencyMonitor;
-import zyt.custom.my.scheduler.TaskMonitor;
-import zyt.custom.my.scheduler.WorkerMonitor;
+import zyt.custom.my.scheduler.monitor.LatencyMonitor;
+import zyt.custom.my.scheduler.monitor.TaskMonitor;
+import zyt.custom.my.scheduler.monitor.WorkerMonitor;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -43,8 +43,8 @@ import java.util.UUID;
  * add : 2018-06-30
  * *****************************
  */
-public final class AuroraFFDPSentenceWordCountTopology {
-    private AuroraFFDPSentenceWordCountTopology() {
+public final class AuroraMonitorSentenceWordCountTopology {
+    private AuroraMonitorSentenceWordCountTopology() {
 
     }
 
@@ -55,23 +55,27 @@ public final class AuroraFFDPSentenceWordCountTopology {
         }
 
         TopologyBuilder builder = new TopologyBuilder();
-        // modfied for ffdp algorithm --------------------------------
         builder.setSpout("spout", new FastRandomSentenceSpout(), 2);
-        builder.setBolt("split", new SplitSentence(), 5).shuffleGrouping("spout");
-        builder.setBolt("count", new WordCount(), 5).fieldsGrouping("split", new Fields("word"));
+        builder.setBolt("split", new SplitSentence(), 2).shuffleGrouping("spout");
+        builder.setBolt("count", new WordCount(), 3).fieldsGrouping("split", new Fields("word"));
+
+        // modfied for ffdp algorithm --------------------------------
+//        builder.setSpout("spout", new FastRandomSentenceSpout(), 1);
+//        builder.setBolt("split", new SplitSentence(), 1).shuffleGrouping("spout");
+//        builder.setBolt("count", new WordCount(), 1).fieldsGrouping("split", new Fields("word"));
         // -----------------------------------------------------------
 
         Config conf = new Config();
         // 2018-05-21 add to test hotscheduler**********************************************
         conf.setMaxSpoutPending(1000); // modified for latency
-        conf.setMessageTimeoutSecs(60); // modified for latency
+        conf.setMessageTimeoutSecs(10); // modified for latency
         conf.setTopologyReliabilityMode(Config.TopologyReliabilityMode.ATLEAST_ONCE); // latency shows config
         // *********************************************************************************
 
         // 0716 for myffdp ----------------------------------------------
-        conf.setContainerMaxCpuHint(2);
-        conf.setContainerMaxRamHint(ByteAmount.fromGigabytes(4));
-        conf.setContainerMaxDiskHint(ByteAmount.fromGigabytes(4));
+//        conf.setContainerMaxCpuHint(3);
+//        conf.setContainerMaxRamHint(ByteAmount.fromGigabytes(4));
+//        conf.setContainerMaxDiskHint(ByteAmount.fromGigabytes(4));
         // --------------------------------------------------------------
 
         // component resource configuration
@@ -83,7 +87,7 @@ public final class AuroraFFDPSentenceWordCountTopology {
         conf.setContainerDiskRequested(ByteAmount.fromGigabytes(3)); // default: 3g
         conf.setContainerRamRequested(ByteAmount.fromGigabytes(3)); // default: 3g
         conf.setContainerCpuRequested(2); // default: 2
-        conf.setNumStmgrs(6);
+        conf.setNumStmgrs(2);
 
         HeronSubmitter.submitTopology(name, conf, builder.createTopology());
     }

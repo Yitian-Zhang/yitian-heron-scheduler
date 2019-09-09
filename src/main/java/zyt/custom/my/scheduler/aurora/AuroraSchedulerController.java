@@ -22,9 +22,9 @@ import com.twitter.heron.spi.statemgr.IStateManager;
 import com.twitter.heron.spi.statemgr.SchedulerStateManagerAdaptor;
 import com.twitter.heron.spi.utils.ReflectionUtils;
 import zyt.custom.my.scheduler.DataManager;
-import zyt.custom.my.scheduler.ExecutorPair;
-import zyt.custom.my.scheduler.FileUtils;
-import zyt.custom.my.scheduler.Utils;
+import zyt.custom.my.scheduler.component.ExecutorPair;
+import zyt.custom.tools.FileUtils;
+import zyt.custom.tools.Utils;
 import zyt.custom.tools.UtilFunctions;
 
 import java.sql.SQLException;
@@ -1855,7 +1855,7 @@ public class AuroraSchedulerController {
                 hostList.add(hostname);
             }
         }
-        FileUtils.writeToFile(filename, "Hostlist: " + zyt.custom.my.scheduler.Utils.collectionToString(hostList));
+        FileUtils.writeToFile(filename, "Hostlist: " + Utils.collectionToString(hostList));
 
         // hostname -> list of stmgrid
         FileUtils.writeToFile(filename, "Getting host -> stmgr list from physical plan...");
@@ -1872,7 +1872,7 @@ public class AuroraSchedulerController {
                 }
             }
             stmgrToHostMap.put(hostname, stmgrList);
-            FileUtils.writeToFile(filename, "Hostname: " + hostname + " stmgr list: " + zyt.custom.my.scheduler.Utils.collectionToString(stmgrToHostMap.get(hostname)));
+            FileUtils.writeToFile(filename, "Hostname: " + hostname + " stmgr list: " + Utils.collectionToString(stmgrToHostMap.get(hostname)));
         }
 
         FileUtils.writeToFile(filename, "Getting stmgr -> task list from physical plan...");

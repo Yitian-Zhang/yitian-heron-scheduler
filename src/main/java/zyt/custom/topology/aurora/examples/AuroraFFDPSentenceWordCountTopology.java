@@ -12,7 +12,7 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-package zyt.custom.topology.aurora;
+package zyt.custom.topology.aurora.examples;
 
 import com.twitter.heron.api.Config;
 import com.twitter.heron.api.HeronSubmitter;
@@ -29,7 +29,9 @@ import com.twitter.heron.api.tuple.Fields;
 import com.twitter.heron.api.tuple.Tuple;
 import com.twitter.heron.api.tuple.Values;
 import com.twitter.heron.common.basics.ByteAmount;
-import zyt.custom.my.scheduler.TaskMonitor;
+import zyt.custom.my.scheduler.monitor.LatencyMonitor;
+import zyt.custom.my.scheduler.monitor.TaskMonitor;
+import zyt.custom.my.scheduler.monitor.WorkerMonitor;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -38,11 +40,11 @@ import java.util.UUID;
 
 /**
  * *****************************
- * add : 2018-08-03
+ * add : 2018-06-30
  * *****************************
  */
-public final class SentenceWordCountTopology {
-    private SentenceWordCountTopology() {
+public final class AuroraFFDPSentenceWordCountTopology {
+    private AuroraFFDPSentenceWordCountTopology() {
 
     }
 
@@ -54,14 +56,14 @@ public final class SentenceWordCountTopology {
 
         TopologyBuilder builder = new TopologyBuilder();
         // modfied for ffdp algorithm --------------------------------
-        builder.setSpout("spout", new FastRandomSentenceSpout(), 1);
-        builder.setBolt("split", new SplitSentence(), 1).shuffleGrouping("spout");
-        builder.setBolt("count", new WordCount(), 2).fieldsGrouping("split", new Fields("word"));
+        builder.setSpout("spout", new FastRandomSentenceSpout(), 2);
+        builder.setBolt("split", new SplitSentence(), 5).shuffleGrouping("spout");
+        builder.setBolt("count", new WordCount(), 5).fieldsGrouping("split", new Fields("word"));
         // -----------------------------------------------------------
 
         Config conf = new Config();
         // 2018-05-21 add to test hotscheduler**********************************************
-        conf.setMaxSpoutPending(100); // modified for latency
+        conf.setMaxSpoutPending(1000); // modified for latency
         conf.setMessageTimeoutSecs(60); // modified for latency
         conf.setTopologyReliabilityMode(Config.TopologyReliabilityMode.ATLEAST_ONCE); // latency shows config
         // *********************************************************************************
@@ -81,7 +83,7 @@ public final class SentenceWordCountTopology {
         conf.setContainerDiskRequested(ByteAmount.fromGigabytes(3)); // default: 3g
         conf.setContainerRamRequested(ByteAmount.fromGigabytes(3)); // default: 3g
         conf.setContainerCpuRequested(2); // default: 2
-        conf.setNumStmgrs(2);
+        conf.setNumStmgrs(6);
 
         HeronSubmitter.submitTopology(name, conf, builder.createTopology());
     }
@@ -135,12 +137,12 @@ public final class SentenceWordCountTopology {
         private SpoutOutputCollector collector;
 
         // deployed load monitor -------------------------------------------------------
-//        private TaskMonitor taskMonitor;
+        private TaskMonitor taskMonitor;
         // -----------------------------------------------------------------------------
         // deployed latency monitor ------------------------
-//        private long spoutStartTime;
-//        private int taskId;
-//        private Map<String,Long> startTimeMap;
+        private long spoutStartTime;
+        private int taskId;
+        private Map<String,Long> startTimeMap;
         // -------------------------------------------------
 
         @Override
@@ -154,8 +156,8 @@ public final class SentenceWordCountTopology {
                          SpoutOutputCollector spoutOutputCollector) {
 
             // deployed load monitor -------------------------------------------------------
-//            WorkerMonitor.getInstance().setContextInfo(topologyContext); // start thread and set topology (check topology)
-//            taskMonitor = new TaskMonitor(topologyContext.getThisTaskId());
+            WorkerMonitor.getInstance().setContextInfo(topologyContext); // start thread and set topology (check topology)
+            taskMonitor = new TaskMonitor(topologyContext.getThisTaskId());
             // -----------------------------------------------------------------------------
 
             RandomString randomString = new RandomString(WORD_LENGTH);
@@ -171,8 +173,8 @@ public final class SentenceWordCountTopology {
             collector = spoutOutputCollector;
             // deployed latency monitor ------------------------
             // get taskid from topologycontext
-//            taskId = topologyContext.getThisTaskId();
-//            startTimeMap = new HashMap<>();
+            taskId = topologyContext.getThisTaskId();
+            startTimeMap = new HashMap<>();
             // -------------------------------------------------
         }
 
@@ -185,21 +187,21 @@ public final class SentenceWordCountTopology {
         @Override
         public void nextTuple() {
             // deployed load monitor -------------------------------------------------------
-//            taskMonitor.checkThreadId();
+            taskMonitor.checkThreadId();
             // -----------------------------------------------------------------------------
 
 //            int nextInt = rnd.nextInt(ARRAY_LENGTH);
 //            collector.emit(new Values(sentences[nextInt]));
 
             // deployed latency monitor ------------------------
-//            spoutStartTime = System.currentTimeMillis(); // record spout start time
+            spoutStartTime = System.currentTimeMillis(); // record spout start time
             // latency monitor using:
             int nextInt = rnd.nextInt(ARRAY_LENGTH);
             String uuid = generateUUID();
             String nextWord = sentences[nextInt];
             Values nextValue = new Values(nextWord, uuid);
 
-//            startTimeMap.put(uuid, spoutStartTime); // msgid->starttime
+            startTimeMap.put(uuid, spoutStartTime); // msgid->starttime
             collector.emit(nextValue, uuid);
             // -----------------------------------------------------------
         }
@@ -207,13 +209,13 @@ public final class SentenceWordCountTopology {
         @Override
         public void ack(Object msgId) {
             // deployed latency monitor ------------------------
-//            String messageId = (String) msgId; // message id
-//            long startTime = startTimeMap.get(messageId);
-//            startTimeMap.remove(messageId);
-//            // compute spout latency
-////            long latency = System.currentTimeMillis() - spoutStartTime;
-//            long latency = System.currentTimeMillis() - startTime;
-//            LatencyMonitor.getInstance().setContent(String.valueOf(taskId), latency);
+            String messageId = (String) msgId; // message id
+            long startTime = startTimeMap.get(messageId);
+            startTimeMap.remove(messageId);
+            // compute spout latency
+//            long latency = System.currentTimeMillis() - spoutStartTime;
+            long latency = System.currentTimeMillis() - startTime;
+            LatencyMonitor.getInstance().setContent(String.valueOf(taskId), latency);
             // -------------------------------------------------
         }
 
@@ -238,15 +240,15 @@ public final class SentenceWordCountTopology {
         @Override
         public void prepare(Map<String, Object> map, TopologyContext topologyContext) {
             // deployed load monitor -------------------------------------------------------
-//            WorkerMonitor.getInstance().setContextInfo(topologyContext);
-//            taskMonitor = new TaskMonitor(topologyContext.getThisTaskId());
+            WorkerMonitor.getInstance().setContextInfo(topologyContext);
+            taskMonitor = new TaskMonitor(topologyContext.getThisTaskId());
             // -----------------------------------------------------------------------------
         }
 
         @Override
         public void execute(Tuple tuple, BasicOutputCollector collector) {
             // deployed load monitor -------------------------------------------------------
-//            taskMonitor.notifyTupleReceived(tuple);
+            taskMonitor.notifyTupleReceived(tuple);
             // -----------------------------------------------------------------------------
             String sentence = tuple.getString(0);
             for (String word : sentence.split("\\s+")) {
@@ -311,8 +313,8 @@ public final class SentenceWordCountTopology {
         @Override
         public void prepare(Map<String, Object> map, TopologyContext topologyContext, OutputCollector outputCollector) {
             // deployed load monitor -------------------------------------------------------
-//            WorkerMonitor.getInstance().setContextInfo(topologyContext);
-//            taskMonitor = new TaskMonitor(topologyContext.getThisTaskId());
+            WorkerMonitor.getInstance().setContextInfo(topologyContext);
+            taskMonitor = new TaskMonitor(topologyContext.getThisTaskId());
             // -----------------------------------------------------------------------------
             // modified baseRichBolt --------------------
             collector = outputCollector;
@@ -322,7 +324,7 @@ public final class SentenceWordCountTopology {
         @Override
         public void execute(Tuple tuple) {
             // deployed load monitor -------------------------------------------------------
-//            taskMonitor.notifyTupleReceived(tuple);
+            taskMonitor.notifyTupleReceived(tuple);
             // -----------------------------------------------------------------------------
 
             String word = tuple.getString(0);

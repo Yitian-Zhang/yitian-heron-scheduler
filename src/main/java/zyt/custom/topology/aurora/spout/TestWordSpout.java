@@ -21,9 +21,9 @@ import com.twitter.heron.api.topology.TopologyContext;
 import com.twitter.heron.api.tuple.Fields;
 import com.twitter.heron.api.tuple.Values;
 import com.twitter.heron.common.basics.SysUtils;
-import zyt.custom.my.scheduler.LatencyMonitor;
-import zyt.custom.my.scheduler.TaskMonitor;
-import zyt.custom.my.scheduler.WorkerMonitor;
+import zyt.custom.my.scheduler.monitor.LatencyMonitor;
+import zyt.custom.my.scheduler.monitor.TaskMonitor;
+import zyt.custom.my.scheduler.monitor.WorkerMonitor;
 
 import java.time.Duration;
 import java.util.HashMap;

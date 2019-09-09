@@ -20,7 +20,7 @@ public class MonitorConfiguration {
         timeWindowCount = 3;
         timeWindowLength = 5;
 
-        // Will to do: load configuration from file
+        // TODO: load configuration from file
         /*
         Properties properties = new Properties();
         properties.load(new FileInputStream(""));

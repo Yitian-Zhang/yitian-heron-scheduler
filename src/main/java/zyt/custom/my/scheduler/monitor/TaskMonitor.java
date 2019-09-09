@@ -1,7 +1,8 @@
-package zyt.custom.my.scheduler;
+package zyt.custom.my.scheduler.monitor;
 
 import com.twitter.heron.api.tuple.Tuple;
 import org.apache.log4j.Logger;
+import zyt.custom.my.scheduler.MonitorConfiguration;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
