@@ -6,7 +6,8 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="yitian-heron-scheduler" />
+        <module name="heron-scheduler-core" />
+        <module name="load-aware-scheduler" />
       </profile>
     </annotationProcessing>
   </component>
