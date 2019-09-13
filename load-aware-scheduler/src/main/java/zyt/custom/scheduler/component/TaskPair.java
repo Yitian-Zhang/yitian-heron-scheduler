@@ -17,12 +17,6 @@ public class TaskPair {
      */
     private final String toString;
 
-    /**
-     * Constructor
-     *
-     * @param sourceTaskId
-     * @param destinationTaskId
-     */
     public TaskPair(int sourceTaskId, int destinationTaskId) {
         this.sourceTaskId = sourceTaskId;
         this.destinationTaskId = destinationTaskId;
@@ -42,11 +36,6 @@ public class TaskPair {
         return toString;
     }
 
-    /**
-     * Get hash code
-     *
-     * @return
-     */
     @Override
     public int hashCode() {
         final int prime = 31;

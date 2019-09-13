@@ -32,14 +32,17 @@ import java.util.*;
 import java.util.logging.Logger;
 
 /**
- * ****************************************
- * 2018-07-03 add for reschedle topo
+ * Algorithm implementation for HOT-EDGE and LOAD-AWARE
+ *
+ * @author yitian
+ *
+ * 2018-07-03 add for re-schedule topology
  * 2018-07-06 noted:
- * is not successfully for now
- * detailing exception at POST about this
+ *      is not successfully for now
+ *      detailing exception at POST about this
  * 2018-07-18 noted:
- * sovled reschedule core problem
- * ****************************************
+ *      sovled reschedule core problem
+ *
  */
 public class AuroraSchedulerController {
     private static final Logger LOG = Logger.getLogger(AuroraSchedulerController.class.getName());

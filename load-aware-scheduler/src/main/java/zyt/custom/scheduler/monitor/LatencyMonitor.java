@@ -59,21 +59,6 @@ public class LatencyMonitor {
     }
 
     /**
-     * Unit test
-     * @param args
-     */
-    public static void main(String[] args) {
-        List<String> taskIdList = new ArrayList<>();
-        taskIdList.add("001");
-        taskIdList.add("002");
-        for (int i = 0; i < 10000; i++) {
-            for (String taskId : taskIdList) {
-                LatencyMonitor.getInstance().setContent(taskId, i);
-            }
-        }
-    }
-
-    /**
      * Construct the latencyMap for every task
      *
      * @param taskId
@@ -133,7 +118,8 @@ public class LatencyMonitor {
             double averageLatency = totalLatency / count;
             // 2018-07-23 add for simple logs
 //            FileUtils.writeToFile(this.filename, "Current task id: " + taskId + " and the average latency: " + averageLatency + " in window: " + timeWindowCount);
-            FileUtils.writeToFile(LATENCY_FILE, taskId + " : " + String.format("%.2f", averageLatency) + " -> in windows: " + timeWindowCount);
+            FileUtils.writeToFile(LATENCY_FILE, taskId + " : " +
+                    String.format("%.2f", averageLatency) + " -> in windows: " + timeWindowCount);
         }
         FileUtils.writeToFile(LOG_FILE, "-------------------End Store Latency------------------");
     }
@@ -142,4 +128,5 @@ public class LatencyMonitor {
         FileUtils.writeToFile(LOG_FILE, "Invoke Latency Return Map Function...");
         return latencyMapReturn;
     }
+
 }

@@ -6,6 +6,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
+ * @author yitian
+ *
  * Attention:
  * Have abandoned for using. This class was using for local mode.
  */
@@ -36,23 +38,6 @@ public class LatencySignalThread extends Thread {
         this.latency = latency;
     }
 
-    public static void main(String[] args) {
-
-        // no synchronized test
-        System.out.println("Latency Monitor started ...");
-        LatencySignalThread monitor1 = new LatencySignalThread();
-        LatencySignalThread monitor2 = new LatencySignalThread();
-        monitor1.start(); // 启动线程
-        monitor2.start();
-
-        int i = 0;
-        while (true) {
-            monitor1.setContent(i+"", i);
-            monitor2.setContent(i+"", i);
-            i++;
-        }
-    }
-
     public void setLatencyMap(String messageId, long latency) {
         latencyMap.put(messageId, latency);
     }
@@ -77,6 +62,23 @@ public class LatencySignalThread extends Thread {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
+        }
+    }
+
+    public static void main(String[] args) {
+
+        // no synchronized test
+        System.out.println("Latency Monitor started ...");
+        LatencySignalThread monitor1 = new LatencySignalThread();
+        LatencySignalThread monitor2 = new LatencySignalThread();
+        monitor1.start(); // 启动线程
+        monitor2.start();
+
+        int i = 0;
+        while (true) {
+            monitor1.setContent(i+"", i);
+            monitor2.setContent(i+"", i);
+            i++;
         }
     }
 }

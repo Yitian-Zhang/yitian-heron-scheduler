@@ -23,11 +23,6 @@ public class SystemMonitorThread extends Thread {
 
     private boolean isStart = true;
 
-    // main function
-    public static void main(String[] args) {
-        new SystemMonitorThread().start();
-    }
-
     /**
      * Cpu usage monitoring function
      *
@@ -52,5 +47,10 @@ public class SystemMonitorThread extends Thread {
                 e.printStackTrace();
             }
         }
+    }
+
+    // main function
+    public static void main(String[] args) {
+        new SystemMonitorThread().start();
     }
 }

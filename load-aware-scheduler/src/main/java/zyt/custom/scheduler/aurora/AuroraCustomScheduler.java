@@ -40,11 +40,12 @@ import java.util.logging.Logger;
 
 /**
  * AuroraCustomScheduler
- * Built by Yitian
+ * @author yitian
+ *
  */
 public class AuroraCustomScheduler implements IScheduler, IScalable {
 
-    private static final Logger LOG = Logger.getLogger(AuroraLauncher.class.getName());
+    private static final Logger LOG = Logger.getLogger(AuroraCustomScheduler.class.getName());
 
     private static final String FILE_NAME = "/home/yitian/logs/aurora-scheduler/aurora-scheduler.txt";
 
