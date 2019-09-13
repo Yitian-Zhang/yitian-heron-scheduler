@@ -23,15 +23,6 @@ public class DataManager {
 
     private static DataManager instance = null;
 
-    private static DateFormat dataFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-
-    private static final String DATABASE_CONFIG_FILE = "/home/yitian/heron-conf/db.ini";
-
-    /**
-     * WIN: D:\\Intellij Workspaces\\heron-java-streamlet-api-example-master\\src\\resources\\dbcp.properties
-     */
-    private static final String DBCP_CONFIG_FILE = "dbcp.properties";
-
     // 2018-05-15 add to doSchedulerTest1 function in this class
     private static long lastRescheduling;
 
@@ -55,7 +46,7 @@ public class DataManager {
             // Load DB configuration from CONFIG_FILE
             logger.debug("Loading Heron cluster configuration from file...");
             Properties clusterProperties = new Properties();
-            clusterProperties.load(new FileInputStream(DATABASE_CONFIG_FILE));
+            clusterProperties.load(new FileInputStream(Constants.DATABASE_CONFIG_FILE));
 
             nodeName = clusterProperties.getProperty("node-name");
             if (clusterProperties.getProperty("capacity") != null) {
@@ -68,7 +59,7 @@ public class DataManager {
             // Set DB connection pool
             logger.debug("Loading configuration from file...");
             Properties properties = new Properties();
-            properties.load(new FileInputStream(DBCP_CONFIG_FILE));
+            properties.load(new FileInputStream(Constants.DBCP_CONFIG_FILE));
             logger.debug("Configuration loaded...");
 
             logger.debug("Setting up pooling data source...");

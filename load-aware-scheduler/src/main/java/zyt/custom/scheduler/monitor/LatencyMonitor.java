@@ -1,5 +1,6 @@
 package zyt.custom.scheduler.monitor;
 
+import zyt.custom.scheduler.Constants;
 import zyt.custom.scheduler.MonitorConfiguration;
 import zyt.custom.tools.FileUtils;
 
@@ -16,12 +17,6 @@ public class LatencyMonitor {
      * Windows: filename = "D:\\logs\\latecny-test.txt";
      */
     private static final String LOG_FILE = "/home/yitian/logs/latency/aurora/latency-monitor.txt";
-
-    /**
-     * latency-data file URL
-     * 2018-07-23 add for simple logs
-     */
-    private static final String LATENCY_FILE = "/home/yitian/logs/latency/aurora/latency-data.txt";
 
     /**
      * taskId -> a list of latency in time window (5s)
@@ -118,7 +113,7 @@ public class LatencyMonitor {
             double averageLatency = totalLatency / count;
             // 2018-07-23 add for simple logs
 //            FileUtils.writeToFile(this.filename, "Current task id: " + taskId + " and the average latency: " + averageLatency + " in window: " + timeWindowCount);
-            FileUtils.writeToFile(LATENCY_FILE, taskId + " : " +
+            FileUtils.writeToFile(Constants.LATENCY_FILE, taskId + " : " +
                     String.format("%.2f", averageLatency) + " -> in windows: " + timeWindowCount);
         }
         FileUtils.writeToFile(LOG_FILE, "-------------------End Store Latency------------------");

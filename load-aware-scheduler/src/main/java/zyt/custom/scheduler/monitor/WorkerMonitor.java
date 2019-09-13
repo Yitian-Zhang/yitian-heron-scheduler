@@ -3,6 +3,7 @@ package zyt.custom.scheduler.monitor;
 import com.twitter.heron.api.topology.TopologyContext;
 import org.apache.log4j.Logger;
 import zyt.custom.cpuinfo.CPUInfo;
+import zyt.custom.scheduler.Constants;
 import zyt.custom.scheduler.DataManager;
 import zyt.custom.scheduler.MonitorConfiguration;
 import zyt.custom.scheduler.component.Executor;
@@ -53,11 +54,7 @@ public class WorkerMonitor {
 
     private int timeWindowLength;
 
-    /**
-     * 2018-07-23
-     * simple for logs
-     */
-    private String trafficFilename = "/home/yitian/logs/traffic-data.txt";
+
 
     // 2018-09-27 add for recording the cpu usage
 //    private String cpuUsageFilename = "/home/yitian/logs/cpu-usage.txt";
@@ -219,7 +216,7 @@ public class WorkerMonitor {
             FileUtils.writeToFile(trafficFilename, taskMonitorList.get(0).getTaskId() + " : " + DataManager.getInstance().getCurrentInterNodeTraffic());
         }
         */
-        FileUtils.writeToFile(trafficFilename, taskMonitorList.get(0).getTaskId() + " : " + DataManager.getInstance().getCurrentInterNodeTraffic());
+        FileUtils.writeToFile(Constants.TRAFFIC_DATA_FILE, taskMonitorList.get(0).getTaskId() + " : " + DataManager.getInstance().getCurrentInterNodeTraffic());
         // -------------------------------------------------
 
         logger.debug("Threads to Tasks association: ");

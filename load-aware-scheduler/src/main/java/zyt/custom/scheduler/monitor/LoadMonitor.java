@@ -1,6 +1,7 @@
 package zyt.custom.scheduler.monitor;
 
 import zyt.custom.cpuinfo.CPUInfo;
+import zyt.custom.scheduler.Constants;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
@@ -9,11 +10,6 @@ import java.util.Map;
 import java.util.Set;
 
 public class LoadMonitor {
-
-    /**
-     * transfer Seconds to nano seconds
-     */
-    private static final int SECS_TO_NANOSECS = 1000000000;
 
     /**
      * instance of this class
@@ -57,7 +53,7 @@ public class LoadMonitor {
             if (loadHistory != null && loadHistory.get(id) != null) {
                 old = loadHistory.get(id);
             }
-            double deltaTime = (double) (currentLoadInfo.get(id) - old) / SECS_TO_NANOSECS;
+            double deltaTime = (double) (currentLoadInfo.get(id) - old) / Constants.SECS_TO_NANOSECS;
             loadInfo.put(id, (long) (deltaTime * cpuSpeed));
         }
         loadHistory = currentLoadInfo; // use current load to
