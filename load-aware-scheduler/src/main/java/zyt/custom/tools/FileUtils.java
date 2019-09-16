@@ -133,17 +133,4 @@ public class FileUtils {
         }
         return lines;
     }
-
-    /**
-     * Unit test
-     *
-     * @param args
-     */
-    public static void main(String[] args) {
-        String filename = "/home/yitian/logs/latency/aurora/latency-monitor.txt";
-//        String filename = "C:\\Users\\Administrator\\Desktop\\heron latency\\text.txt";
-        FileUtils.writeToFile(filename, "content");
-        FileUtils.writeToFile(filename, "add this content");
-
-    }
 }
