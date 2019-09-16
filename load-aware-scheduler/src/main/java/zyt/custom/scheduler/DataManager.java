@@ -21,16 +21,14 @@ import java.util.*;
 
 public class DataManager {
 
+    private Logger logger = Logger.getLogger(DataManager.class);
+
+    /**
+     * 单例模式
+     */
     private static DataManager instance = null;
 
-    // 2018-05-15 add to doSchedulerTest1 function in this class
-    private static long lastRescheduling;
-
-    private static long now;
-
     private DataSource dataSource;
-
-    private Logger logger;
 
     private String nodeName;
 
@@ -41,23 +39,23 @@ public class DataManager {
 
 
     private DataManager() {
-        logger = Logger.getLogger(DataManager.class);
         try {
             // Load DB configuration from CONFIG_FILE
-            logger.debug("Loading Heron cluster configuration from file...");
+            logger.debug("Loading Heron cluster configuration from file: " + Constants.DATABASE_CONFIG_FILE);
             Properties clusterProperties = new Properties();
             clusterProperties.load(new FileInputStream(Constants.DATABASE_CONFIG_FILE));
 
             nodeName = clusterProperties.getProperty("node-name");
             if (clusterProperties.getProperty("capacity") != null) {
                 capacity = Integer.parseInt(clusterProperties.getProperty("capacity"));
-                if (capacity < 1 || capacity > 100)
+                if (capacity < 1 || capacity > 100) {
                     throw new RuntimeException("Wrong capacity: " + capacity + ", expected in the range [1, 100]");
+                }
             }
             logger.debug("Loaded Heron cluster configuration success...");
 
             // Set DB connection pool
-            logger.debug("Loading configuration from file...");
+            logger.debug("Loading configuration from file: " + Constants.DBCP_CONFIG_FILE);
             Properties properties = new Properties();
             properties.load(new FileInputStream(Constants.DBCP_CONFIG_FILE));
             logger.debug("Configuration loaded...");
@@ -130,11 +128,15 @@ public class DataManager {
     public void storeCpuLoad(String topologyId, int beginTask, int endTask, long load) throws SQLException {
         Connection connection = null;
         Statement statement = null;
-        logger.debug("Going to store load stat (topology: " + topologyId + ", executor: [" + beginTask + ", " + endTask + "], load: " + load + " CPU cycles per second)");
+        logger.debug("Going to store load stat (topology: " + topologyId
+                + ", executor: [" + beginTask + ", " + endTask + "], load: " + load + " CPU cycles per second)");
         try {
             connection = getConnection();
             statement = connection.createStatement();
-            String sql = "update `tb_cpu_load` set `load` = " + load + ", node = '" + nodeName + "' where topology_id = '" + topologyId + "' and begin_task = " + beginTask + " and end_task = " + endTask;
+            String sql = "update `tb_cpu_load` set `load` = " + load + ", node = '" + nodeName
+                    + "' where topology_id = '" + topologyId
+                    + "' and begin_task = " + beginTask
+                    + " and end_task = " + endTask;
             logger.debug("SQL Update Script: " + sql);
             if (statement.executeUpdate(sql) == 0) {
                 sql = "insert into `tb_cpu_load`(topology_id, begin_task, end_task, `load`, node) " +
@@ -167,11 +169,15 @@ public class DataManager {
     public void storeTraffic(String topologyId, int sourceTask, int destinationTask, int traffic) throws SQLException {
         Connection connection = null;
         Statement statement = null;
-        logger.debug("Going to store traffic stat (topology: " + topologyId + ", sourceTask: " + sourceTask + ", destination: " + destinationTask + ", traffic: " + traffic + " tuples per second)");
+        logger.debug("Going to store traffic stat (topology: " + topologyId + ", sourceTask: "
+                + sourceTask + ", destination: " + destinationTask + ", traffic: " + traffic + " tuples per second)");
         try {
             connection = getConnection();
             statement = connection.createStatement();
-            String sql = "update tb_traffic set traffic = " + traffic + " where topology_id = '" + topologyId + "' and source_task = " + sourceTask + " and destination_task = " + destinationTask;
+            String sql = "update tb_traffic set traffic = " + traffic
+                    + " where topology_id = '" + topologyId
+                    + "' and source_task = " + sourceTask
+                    + " and destination_task = " + destinationTask;
             logger.debug("SQL Update script: " + sql);
             if (statement.executeUpdate(sql) == 0) {
                 sql = "insert into tb_traffic(topology_id, source_task, destination_task, traffic) " +
@@ -205,10 +211,12 @@ public class DataManager {
             connection = getConnection();
             statement = connection.createStatement();
             long absoluteCapacity = totalSpeed / 100 * capacity;
-            String sql = "update tb_node set capacity = " + absoluteCapacity + " where name = '" + nodeName + "'";
+            String sql = "update tb_node set capacity = " + absoluteCapacity
+                    + " where name = '" + nodeName + "'";
             logger.debug("SQL Update script: " + sql);
             if (statement.executeUpdate(sql) == 0) {
-                sql = "insert into tb_node(name, capacity, cores) values('" + nodeName + "', " + totalSpeed + ", " + CPUInfo.getInstance().getNumberOfCores() + ")";
+                sql = "insert into tb_node(name, capacity, cores) values('"
+                        + nodeName + "', " + totalSpeed + ", " + CPUInfo.getInstance().getNumberOfCores() + ")";
                 logger.debug("SQL Insert script: " + sql);
                 statement.execute(sql);
             }
@@ -453,90 +461,6 @@ public class DataManager {
     }
 
     /**
-     * *************************************
-     * 2015-05-14 add
-     * test doschedule function
-     * have bugs. not solved
-     * *************************************
-     */
-//    private static void doScheduleTest1() {
-//        now = System.currentTimeMillis();
-//        lastRescheduling = System.currentTimeMillis();
-//        new Thread(new Runnable() {
-//            @Override
-//            public void run() {
-//                while (true) {
-//                    try {
-//                        Thread.sleep(10 * 1000);
-//                        long elapsedTime = (now - lastRescheduling) / 1000; // s
-//                        System.out.println(elapsedTime + " = " + now + " - " + lastRescheduling );
-//                        if (elapsedTime >= 30) {
-//                            // invoke trigger function
-//                            System.out.println("---------------start trigger schedule-------------");
-//                            lastRescheduling = System.currentTimeMillis(); // record current trigger time
-//                        }
-//                        List<Node> nodeList = DataManager.getInstance().getOverloadedNodes();
-//                        if (nodeList != null) { // exist over loaded node in cluster
-////                            for (Node node : nodeList) {
-////                                System.out.println("Node: " + node);
-////                            }
-//                            now = System.currentTimeMillis();
-//                        } else {
-//                            now = lastRescheduling;
-//                        }
-//
-//                    } catch (SQLException | InterruptedException e) {
-//                        e.printStackTrace();
-//                    }
-//                }
-//
-//            }
-//        }).start();
-//    }
-
-
-//    private static int count = 0;
-
-    /**
-     * ************************************
-     * Add 2018-05-17
-     * ************************************
-     */
-//    private static void doScheduleTest2() {
-//        new Thread(new Runnable() {
-//            @Override
-//            public void run() {
-//                Map<String, Integer> nodeOverloadCountMap = new HashMap<>();
-//                while (true) {
-//                    try {
-//                        Thread.sleep(10 * 1000);
-//                        System.out.println("Current count is: " + count);
-//                        if (count >= 12) { // 12 * 10s
-//                            // invoke trigger function
-//                            System.out.println("---------------start trigger schedule-------------");
-//                            count = 0;
-//                        }
-//                        List<Node> nodeList = DataManager.getInstance().getOverloadedNodes();
-//                        if (nodeList.size() != 0) { // exist over loaded node in cluster
-//                            for (Node node : nodeList) {
-////                                nodeOverloadCountMap.put(node.getName(), count);
-//                                System.out.println("Overloaded node: " + node + " has overloaded :" + count + " times!!!");
-//                            }
-//                            count += 1;
-//                        } else {
-//                            System.out.println("Now, No node is overloaded...");
-//                            count = 0;
-//                        }
-//                    } catch (SQLException | InterruptedException e) {
-//                        e.printStackTrace();
-//                    }
-//                }
-//
-//            }
-//        }).start();
-//    }
-
-    /**
      * Get current inter-node traffic
      * 2018-07-06 test success
      *
@@ -582,9 +506,9 @@ public class DataManager {
                 logger.debug("destination executor for destination task: " + destinationTask + ": " + destination);
 
                 if (source != null && destination != null && !source.getNode().equals(destination.getNode())) {
-                    logger.debug(
-                            "Tasks " + sourceTask + " and " + destinationTask +
-                                    " are currently deployed on distinct nodes, so they contribute to inter-node traffic for " + traffic + " tuple/s");
+                    logger.debug("Tasks " + sourceTask + " and " + destinationTask +
+                                    " are currently deployed on distinct nodes, so they contribute to inter-node traffic for "
+                            + traffic + " tuple/s");
                     currentInterNodeTraffic += traffic;
                 }
             }
@@ -650,7 +574,8 @@ public class DataManager {
         List<ExecutorPair> hostPairsList = new ArrayList<>();
         for (ExecutorPair pair : trafficList) {
             double bias = Math.abs(pair.getTraffic() - averageTraffic);
-            System.out.println("Pair traffic: " + pair.getTraffic() + " average traffic: " + averageTraffic + " bias: " + bias + " average bias: " + averageBias);
+            System.out.println("Pair traffic: " + pair.getTraffic() + " average traffic: " + averageTraffic + " bias: "
+                    + bias + " average bias: " + averageBias);
             if (pair.getTraffic() > averageTraffic && bias > averageBias) {
                 logger.debug("Hot edge: " + pair);
                 hostPairsList.add(pair);
@@ -739,7 +664,8 @@ public class DataManager {
                     long hostCpuLoad = resultSet.getLong(1);
                     double hostCpuTotal = hostList.get(hostname).getCapacity() / 0.4;
                     double hostCpuUsage = hostCpuLoad / hostCpuTotal;
-                    logger.debug("Hostname: " + hostname + ", total load: " + hostCpuTotal + ", cpu load: " + hostCpuLoad + ", Usage: " + hostCpuUsage);
+                    logger.debug("Hostname: " + hostname + ", total load: " + hostCpuTotal + ", cpu load: "
+                            + hostCpuLoad + ", Usage: " + hostCpuUsage);
                     cpuUsageOfHost.put(hostname, Double.toString(hostCpuUsage));
                 }
             }
