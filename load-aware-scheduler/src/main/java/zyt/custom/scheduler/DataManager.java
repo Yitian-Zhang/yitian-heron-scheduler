@@ -30,12 +30,15 @@ public class DataManager {
 
     private DataSource dataSource;
 
+    /**
+     * host name set in CONFIG_FILE
+     */
     private String nodeName;
 
     /**
      * percentage of cpu load: default = 60
      */
-    private int capacity;
+    private int capacity = 60;
 
 
     private DataManager() {
@@ -52,21 +55,18 @@ public class DataManager {
                     throw new RuntimeException("Wrong capacity: " + capacity + ", expected in the range [1, 100]");
                 }
             }
-            logger.debug("Loaded Heron cluster configuration success...");
 
             // Set DB connection pool
             logger.debug("Loading configuration from file: " + Constants.DBCP_CONFIG_FILE);
             Properties properties = new Properties();
             properties.load(new FileInputStream(Constants.DBCP_CONFIG_FILE));
-            logger.debug("Configuration loaded...");
 
-            logger.debug("Setting up pooling data source...");
+            // Setting up pooling data source
             dataSource = BasicDataSourceFactory.createDataSource(properties);
-            logger.debug("Data Source is set up...");
 
-            logger.info("DataManager is started...");
+            logger.info("DataManager is started.");
         } catch (Exception e) {
-            logger.error("Error starting DataManager", e);
+            logger.error("Error starting DataManager: ", e);
         }
     }
 
@@ -89,18 +89,20 @@ public class DataManager {
         Connection connection = null;
         Statement statement = null;
         ResultSet resultSet = null;
-        logger.debug("Start mysql connection test...");
+        logger.debug("Start mysql connection test.");
         try {
             connection = getConnection();
             statement = connection.createStatement();
+
             String sql = "select id from tb_test";
             logger.debug("SQL Script: " + sql);
+
             resultSet = statement.executeQuery(sql);
             while (resultSet.next()) {
                 logger.debug("Query result: " + resultSet.getString("id"));
             }
         } catch (SQLException e) {
-            logger.error("Test connection is wrong...", e);
+            logger.error("Test connection is wrong: ", e);
             throw e;
         } finally {
             if (resultSet != null) {
@@ -128,24 +130,23 @@ public class DataManager {
     public void storeCpuLoad(String topologyId, int beginTask, int endTask, long load) throws SQLException {
         Connection connection = null;
         Statement statement = null;
-        logger.debug("Going to store load stat (topology: " + topologyId
+        logger.debug("Storing load stat (topology: " + topologyId
                 + ", executor: [" + beginTask + ", " + endTask + "], load: " + load + " CPU cycles per second)");
         try {
             connection = getConnection();
             statement = connection.createStatement();
+
             String sql = "update `tb_cpu_load` set `load` = " + load + ", node = '" + nodeName
                     + "' where topology_id = '" + topologyId
                     + "' and begin_task = " + beginTask
                     + " and end_task = " + endTask;
-            logger.debug("SQL Update Script: " + sql);
             if (statement.executeUpdate(sql) == 0) {
                 sql = "insert into `tb_cpu_load`(topology_id, begin_task, end_task, `load`, node) " +
                         "values('" + topologyId + "', " + beginTask + ", " + endTask + ", " + load + ", '" + nodeName + "')";
-                logger.debug("SQL Insert Script: " + sql);
                 statement.executeUpdate(sql);
             }
         } catch (SQLException e) {
-            logger.error("An error occurred storing a load stat!!!", e);
+            logger.error("Storing load stat, error: ", e);
             throw e;
         } finally {
             if (statement != null) {
@@ -169,24 +170,23 @@ public class DataManager {
     public void storeTraffic(String topologyId, int sourceTask, int destinationTask, int traffic) throws SQLException {
         Connection connection = null;
         Statement statement = null;
-        logger.debug("Going to store traffic stat (topology: " + topologyId + ", sourceTask: "
+        logger.debug("Storing traffic stat (topology: " + topologyId + ", sourceTask: "
                 + sourceTask + ", destination: " + destinationTask + ", traffic: " + traffic + " tuples per second)");
         try {
             connection = getConnection();
             statement = connection.createStatement();
+
             String sql = "update tb_traffic set traffic = " + traffic
                     + " where topology_id = '" + topologyId
                     + "' and source_task = " + sourceTask
                     + " and destination_task = " + destinationTask;
-            logger.debug("SQL Update script: " + sql);
             if (statement.executeUpdate(sql) == 0) {
                 sql = "insert into tb_traffic(topology_id, source_task, destination_task, traffic) " +
                         "values('" + topologyId + "', " + sourceTask + ", " + destinationTask + ", " + traffic + ")";
-                logger.debug("SQL Insert Script: " + sql);
                 statement.executeUpdate(sql);
             }
         } catch (SQLException e) {
-            logger.error("An error occurred storing a load stat!!!", e);
+            logger.error("Storing traffic, error: ", e);
             throw e;
         } finally {
             if (statement != null) {
@@ -201,7 +201,7 @@ public class DataManager {
     /**
      * Update or insert Node cpu load
      *
-     * @param totalSpeed
+     * @param totalSpeed speed of CPU
      * @throws SQLException
      */
     public void checkNode(long totalSpeed) throws SQLException {
@@ -210,18 +210,17 @@ public class DataManager {
         try {
             connection = getConnection();
             statement = connection.createStatement();
+
             long absoluteCapacity = totalSpeed / 100 * capacity;
             String sql = "update tb_node set capacity = " + absoluteCapacity
                     + " where name = '" + nodeName + "'";
-            logger.debug("SQL Update script: " + sql);
             if (statement.executeUpdate(sql) == 0) {
                 sql = "insert into tb_node(name, capacity, cores) values('"
                         + nodeName + "', " + totalSpeed + ", " + CPUInfo.getInstance().getNumberOfCores() + ")";
-                logger.debug("SQL Insert script: " + sql);
                 statement.execute(sql);
             }
         } catch (SQLException e) {
-            logger.error("An error occurred checking the node!!!", e);
+            logger.error("Checking node, error: ", e);
             throw e;
         } finally {
             if (statement != null) {
@@ -235,32 +234,31 @@ public class DataManager {
 
     /**
      * Get topology total load
-     * 2018-05-14 add
      *
-     * @param topologyId
-     * @return
+     * @param topologyId topology id
+     * @return total load of this topology
      */
     public long getTotalLoad(String topologyId) throws Exception {
+        logger.debug("Getting total load of topology: " + topologyId);
+
         Connection connection = null;
         Statement statement = null;
         ResultSet resultSet = null;
         long totalLoad = -1;
-        logger.debug("Going to get total load of topology: " + topologyId);
+
         try {
             connection = getConnection();
             statement = connection.createStatement();
-//            String sql = "select sum(`load`.`load`) from `load` join topology on `load`.topology_id = topology.id where topology.storm_id = '" + topologyID + "'";
+
             String sql = "select sum(`tb_cpu_load`.`load`) from `tb_cpu_load` where topology_id = '" + topologyId + "'";
-            logger.debug("SQL script: " + sql);
             resultSet = statement.executeQuery(sql);
             if (resultSet.next()) {
                 totalLoad = resultSet.getLong(1);
             } else {
-                throw new Exception("Cannot find topology " + topologyId + " in the DB!!!");
+                throw new Exception("Cannot find topology " + topologyId + " in the DB.");
             }
-
         } catch (SQLException e) {
-            logger.error("An error occurred getting total load for topology: " + topologyId, e);
+            logger.error("Getting total load for topology: " + topologyId + ", error: ", e);
             throw e;
         } finally {
             if (resultSet != null) {
@@ -279,9 +277,8 @@ public class DataManager {
 
     /**
      * Get worker node info
-     * add 2018-05-14
      *
-     * @return
+     * @return nodeName -> Node info
      * @throws SQLException
      */
     public Map<String, Node> getNodes() throws SQLException {
@@ -289,12 +286,14 @@ public class DataManager {
         Statement statement = null;
         ResultSet resultSet = null;
         Map<String, Node> nodeMap = new HashMap<>();
+
         try {
             connection = getConnection();
             statement = connection.createStatement();
+
             String sql = "select name, capacity, cores from tb_node";
-            logger.debug("SQL script: " + sql);
             resultSet = statement.executeQuery(sql);
+
             while (resultSet.next()) {
                 String name = resultSet.getString(1);
                 long capacity = resultSet.getLong(2);
@@ -307,7 +306,7 @@ public class DataManager {
             }
 
         } catch (SQLException e) {
-            logger.error("An error occurred getting the nodes", e);
+            logger.error("Getting nodes, error: ", e);
             throw e;
         } finally {
             if (resultSet != null) {
@@ -326,14 +325,15 @@ public class DataManager {
     /**
      * Get traffic between executor from begin_task -> end_task
      *
-     * @param topologyId
-     * @return
+     * @param topologyId topology id
+     * @return List of ExecutorPair
      */
     public List<ExecutorPair> getInterExecutorTrafficList(String topologyId) throws SQLException {
         Connection connection = null;
         Statement statement = null;
         ResultSet resultSet = null;
         List<ExecutorPair> trafficStat = new ArrayList<>();
+
         try {
             connection = getConnection();
             statement = connection.createStatement();
@@ -341,8 +341,8 @@ public class DataManager {
             // load executors
             List<Executor> executorList = new ArrayList<Executor>();
             String sql = "select begin_task, end_task, `load` from `tb_cpu_load` where topology_id = '" + topologyId + "'";
-            logger.debug("SQL script: " + sql);
             resultSet = statement.executeQuery(sql);
+
             while (resultSet.next()) {
                 Executor executor = new Executor(resultSet.getInt(1), resultSet.getInt(2));
                 executor.setLoad(resultSet.getLong(3));
@@ -350,19 +350,16 @@ public class DataManager {
                 executorList.add(executor);
             }
             resultSet.close();
-            logger.debug("Executor list for topology " + topologyId + ": " + Utils.collectionToString(executorList));
+            logger.debug("Executor list for topology: " + topologyId + ", includes: "
+                    + Utils.collectionToString(executorList));
 
-//            sql = "select source_task, destination_task, traffic from tb_traffic";
-            // update 2018-07-01: add order by traffic desc
             sql = "select source_task, destination_task, traffic from tb_traffic order by traffic desc";
-            logger.debug("SQL script: " + sql);
             resultSet = statement.executeQuery(sql);
             while (resultSet.next()) {
                 int sourceTask = resultSet.getInt(1); // begin_task
                 int destinationTask = resultSet.getInt(2); // destination_task
                 int traffic = resultSet.getInt(3); // traffic
 
-                //
                 Executor source = Utils.getExecutor(sourceTask, executorList);
                 logger.debug("Source executor for source task " + sourceTask + ": " + source);
                 Executor destination = Utils.getExecutor(destinationTask, executorList);
@@ -395,7 +392,7 @@ public class DataManager {
 
             }
         } catch (SQLException e) {
-            logger.error("An error occurred retrieving traffic stats for topology: " + topologyId, e);
+            logger.error("Retrieving traffic stats for topology: " + topologyId + ", error: ", e);
             throw e;
         } finally {
             if (resultSet != null) {
@@ -413,27 +410,26 @@ public class DataManager {
 
     /**
      * Get overload nodes list
-     * add 2018-05-14
-     * <p>
-     * question: there is a problem when tb_node table have same heron01 data. unsolved
+     * TODO: There is a problem when tb_node table have same heron01 data.
+     * Therefore, data in DB should be cleared before each experiment.
      *
-     * @return
+     * @return list of node
      */
     public List<Node> getOverloadedNodes() throws SQLException {
         Connection connection = null;
         Statement statement = null;
         ResultSet resultSet = null;
         List<Node> nodeList = new ArrayList<>();
+
         try {
             connection = getConnection();
             statement = connection.createStatement();
-            String sql =
-                    "select `tb_cpu_load`.node, sum(`load`) as total_load, tb_node.capacity, tb_node.cores " +
+            String sql = "select `tb_cpu_load`.node, sum(`load`) as total_load, tb_node.capacity, tb_node.cores " +
                             "from `tb_cpu_load` join tb_node on `tb_cpu_load`.node = tb_node.name " +
                             "group by tb_node.name " +
                             "having total_load > tb_node.capacity";
-            logger.debug("SQL script: " + sql);
             resultSet = statement.executeQuery(sql);
+
             while (resultSet.next()) {
                 String name = resultSet.getString(1);
                 long load = resultSet.getLong(2);
@@ -444,7 +440,7 @@ public class DataManager {
                 nodeList.add(node);
             }
         } catch (SQLException e) {
-            logger.error("An error occurred loading overloaded nodes");
+            logger.error("Getting overloaded nodes, error: ", e);
             throw e;
         } finally {
             if (resultSet != null) {
@@ -462,9 +458,8 @@ public class DataManager {
 
     /**
      * Get current inter-node traffic
-     * 2018-07-06 test success
      *
-     * @return current inter node traffic (int)
+     * @return current inter-node traffic (int)
      * @throws SQLException
      */
     public int getCurrentInterNodeTraffic() throws SQLException {
@@ -472,14 +467,16 @@ public class DataManager {
         Statement statement = null;
         ResultSet resultSet = null;
         int currentInterNodeTraffic = 0;
+
         try {
             connection = getConnection();
             statement = connection.createStatement();
+
             // load executors
             List<Executor> executorList = new ArrayList<>();
             String sql = "select begin_task, end_task, `load`, node from `tb_cpu_load`";
-            logger.debug("SQL script: " + sql);
             resultSet = statement.executeQuery(sql);
+
             while (resultSet.next()) {
                 Executor executor = new Executor(resultSet.getInt(1), resultSet.getInt(2));
                 executor.setLoad(resultSet.getLong(3));
@@ -487,11 +484,11 @@ public class DataManager {
                 executorList.add(executor);
             }
             resultSet.close();
-            logger.debug("Executor list: " + Utils.collectionToString(executorList));
+            // For debug:
+//            logger.debug("Executor list: " + Utils.collectionToString(executorList));
 
             // load tasks and create the list the executor pairs sorted by traffic desc
             sql = "select source_task, destination_task, traffic from tb_traffic";
-            logger.debug("SQL script: " + sql);
             resultSet = statement.executeQuery(sql);
             while (resultSet.next()) {
                 // load data from DB
@@ -507,13 +504,13 @@ public class DataManager {
 
                 if (source != null && destination != null && !source.getNode().equals(destination.getNode())) {
                     logger.debug("Tasks " + sourceTask + " and " + destinationTask +
-                                    " are currently deployed on distinct nodes, so they contribute to inter-node traffic for "
+                            " are currently deployed on distinct nodes, so they contribute to inter-node traffic for "
                             + traffic + " tuple/s");
                     currentInterNodeTraffic += traffic;
                 }
             }
         } catch (SQLException e) {
-            logger.error("An error occurred computing current inter-node traffic", e);
+            logger.error("Computing current inter-node traffic, error: ", e);
             throw e;
         } finally {
             if (resultSet != null) {
@@ -530,7 +527,6 @@ public class DataManager {
     }
 
     /**
-     * Add: 2018-05-17
      * calculate hot edges in topology
      * Update: 2018-07-01
      * add sort pair with traffic desc
@@ -538,9 +534,9 @@ public class DataManager {
      * @throws SQLException
      */
     public List<ExecutorPair> calculateHotEdges(String topologyId) throws SQLException {
-        logger.debug("Getting hot edge from DB using task load...");
+        logger.debug("Getting hot edge from DB using task load, for topology: " + topologyId);
+
         // calculate average
-//        String topologyId = "LocalSentenceWordCountTopology7ef07afa-a700-4d09-b42c-67aa39af4de4";
         List<ExecutorPair> trafficList = DataManager.getInstance().getInterExecutorTrafficList(topologyId);
         double totalTraffic = 0;
         for (ExecutorPair pair : trafficList) {
@@ -549,24 +545,29 @@ public class DataManager {
         // calculate average traffic
         double averageTraffic = totalTraffic / trafficList.size();
 
-        // calculate standard diviation ----------------------------------------------
+        // calculate variance
         double variance = 0;
         for (ExecutorPair pair : trafficList) {
             variance += (pair.getTraffic() - averageTraffic) * (pair.getTraffic() - averageTraffic);
         }
+
         // calculate standard deviation
+        /*
+         Output example:
+            Total traffic is: 84592.0, average traffic between executor is: 21148.0
+            Variance is: 7.4148074E7 and standard deviation is: 4305.463796154835
+         */
         double standardDeviation = Math.sqrt(variance / trafficList.size());
         System.out.println("Total traffic is: " + totalTraffic + ", average traffic between executor is: " + averageTraffic);
         System.out.println("Variance is: " + variance + " and standard deviation is: " + standardDeviation);
-//        Total traffic is: 84592.0, average traffic between executor is: 21148.0
-//        Variance is: 7.4148074E7 and standard deviation is: 4305.463796154835
-        // ---------------------------------------------------------------------------
 
         double totalBias = 0;
         for (ExecutorPair pair : trafficList) {
+            /*
+             update: 20180604
+             double bias = pair.getTraffic() - averageTraffic;
+             */
             double bias = Math.abs(pair.getTraffic() - averageTraffic);
-            // udpate: 20180604
-//            double bias = pair.getTraffic() - averageTraffic;
             totalBias += bias;
         }
         double averageBias = totalBias / trafficList.size();
@@ -574,7 +575,7 @@ public class DataManager {
         List<ExecutorPair> hostPairsList = new ArrayList<>();
         for (ExecutorPair pair : trafficList) {
             double bias = Math.abs(pair.getTraffic() - averageTraffic);
-            System.out.println("Pair traffic: " + pair.getTraffic() + " average traffic: " + averageTraffic + " bias: "
+            logger.info("Pair traffic: " + pair.getTraffic() + " average traffic: " + averageTraffic + " bias: "
                     + bias + " average bias: " + averageBias);
             if (pair.getTraffic() > averageTraffic && bias > averageBias) {
                 logger.debug("Hot edge: " + pair);
@@ -588,13 +589,11 @@ public class DataManager {
                 logger.debug("Cool edge: " + pair);
             }
         }
-        System.out.println(Utils.collectionToString(hostPairsList));
-
+        logger.info(Utils.collectionToString(hostPairsList));
         return hostPairsList;
     }
 
     /**
-     * Add 2018-05-21
      * For hot edge scheduling
      *
      * @return
@@ -605,22 +604,21 @@ public class DataManager {
         Connection connection = null;
         Statement statement = null;
         ResultSet resultSet = null;
-        logger.debug("Going to get task load stat...");
+
         try {
             connection = getConnection();
             statement = connection.createStatement();
+
             String sql = "select `begin_task`, `load` from `tb_cpu_load` order by `load` desc";
-            logger.debug("SQL Update Script: " + sql);
             resultSet = statement.executeQuery(sql);
             while (resultSet.next()) {
                 int taskId = resultSet.getInt(1);
                 long load = resultSet.getLong(2);
                 taskLoadMap.put(taskId, load);
-                logger.debug("taskId: " + taskId + " -> load: " + load);
             }
 
         } catch (SQLException e) {
-            logger.error("An error occurred getting task load!!!", e);
+            logger.error("Getting task load, error: ", e);
             throw e;
         } finally {
             if (resultSet != null) {
@@ -645,8 +643,6 @@ public class DataManager {
     public Map<String, String> getCpuUsageOfHost() throws SQLException {
         Map<String, String> cpuUsageOfHost = new HashMap<>();
         Map<String, Node> hostList = DataManager.getInstance().getNodes();
-//        long totalLoadOfHeron03And04 = 11777605600l;
-//        long totalLoadOfHeron05And06 = 15061745600l;
 
         Connection connection = null;
         Statement statement = null;
@@ -658,7 +654,6 @@ public class DataManager {
 
             for (String hostname : hostList.keySet()) {
                 String sql = "select sum(`load`) from `tb_cpu_load` where node='" + hostname + "'";
-                logger.debug("SQL Select Script: " + sql);
                 resultSet = statement.executeQuery(sql);
                 if (resultSet.next()) {
                     long hostCpuLoad = resultSet.getLong(1);
@@ -671,7 +666,7 @@ public class DataManager {
             }
 
         } catch (SQLException e) {
-            logger.error("An error occurred getting cpu load of host!!!", e);
+            logger.error("Getting cpu load of host, error: ", e);
             throw e;
         } finally {
             if (resultSet != null) {
@@ -698,23 +693,23 @@ public class DataManager {
         Connection connection = null;
         Statement statement = null;
         ResultSet resultSet = null;
-        logger.debug("Going to get instance list...");
+
         try {
             connection = getConnection();
             statement = connection.createStatement();
+
             String sql = "select `begin_task`, `load` from `tb_cpu_load` order by `load` desc";
-            logger.debug("SQL Update Script: " + sql);
             resultSet = statement.executeQuery(sql);
             while (resultSet.next()) {
                 int taskId = resultSet.getInt(1);
                 long load = resultSet.getLong(2);
                 Instance instance = new Instance(taskId, load);
                 instanceList.add(instance);
-                logger.debug(instance.toString());
-            }
 
+            }
+            logger.debug("Instance list is: " + Utils.collectionToString(instanceList));
         } catch (SQLException e) {
-            logger.error("An error occurred getting task load!!!", e);
+            logger.error("Getting instance list, error: ", e);
             throw e;
         } finally {
             if (resultSet != null) {
@@ -741,14 +736,15 @@ public class DataManager {
         Statement statement = null;
         ResultSet resultSet = null;
         List<Node> nodeList = new ArrayList<>();
+
         try {
             connection = getConnection();
             statement = connection.createStatement();
+
             String sql =
                     "select `tb_cpu_load`.node, sum(`load`) as total_load, tb_node.capacity, tb_node.cores " +
                             "from `tb_cpu_load` join tb_node on `tb_cpu_load`.node = tb_node.name " +
                             "group by tb_node.name ";
-            logger.debug("SQL script: " + sql);
             resultSet = statement.executeQuery(sql);
             while (resultSet.next()) {
                 String name = resultSet.getString(1);
@@ -760,7 +756,7 @@ public class DataManager {
                 nodeList.add(node);
             }
         } catch (SQLException e) {
-            logger.error("An error occurred loading overloaded nodes");
+            logger.error("Getting load of nodes, error: ", e);
             throw e;
         } finally {
             if (resultSet != null) {
@@ -780,7 +776,7 @@ public class DataManager {
      * Calculate the load difference of worker nods in the cluster
      * as the condition for trigger rescheduling
      *
-     * @param nodeList
+     * @param nodeList list of node
      * @return
      */
     public int calculateDifferentLoadForTrigger(List<Node> nodeList) {
@@ -803,6 +799,9 @@ public class DataManager {
             }
         }
         int differentPercentage = (int) ((maxLoad - minLoad) * 100 / maxLoad);
+        logger.info("Node with max load is: [" + maxLoadName + ", " + maxLoad + "]."
+                + "Node with min load is: [" + minLoadName + ", " + minLoad + "]."
+                + "The difference percentage of the two nodes is: " + differentPercentage);
         return differentPercentage;
     }
 }
