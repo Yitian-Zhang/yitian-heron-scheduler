@@ -19,6 +19,9 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
+/**
+ * @author yitian
+ */
 public class DataManager {
 
     private Logger logger = Logger.getLogger(DataManager.class);

@@ -45,6 +45,16 @@ public class Constants {
      */
     public static final String DBCP_CONFIG_FILE = "dbcp.properties";
 
+    /**
+     * time window count in MonitorConfiguration
+     */
+    public static final Integer TIME_WINDOW_COUNT = 3;
+
+    /**
+     * time window length in MonitorConfiguration
+     */
+    public static final Integer TIME_WINDOW_LENGTH = 10;
+
     // original constants
     /*
     public static final int ACKER_TAKS_ID = 1;

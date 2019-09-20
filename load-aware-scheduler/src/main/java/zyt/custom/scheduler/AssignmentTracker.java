@@ -7,7 +7,8 @@ import zyt.custom.tools.Utils;
 import java.util.*;
 
 /**
- * Useless for now
+ * This class is not used.
+ *
  */
 public class AssignmentTracker {
 

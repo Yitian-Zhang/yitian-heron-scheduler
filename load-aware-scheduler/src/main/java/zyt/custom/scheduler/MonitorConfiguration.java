@@ -2,6 +2,9 @@ package zyt.custom.scheduler;
 
 import org.apache.log4j.Logger;
 
+/**
+ * @author yitian
+ */
 public class MonitorConfiguration {
 
     private static Logger logger = Logger.getLogger(MonitorConfiguration.class);
@@ -16,11 +19,11 @@ public class MonitorConfiguration {
      * load configuration from properties file
      */
     private MonitorConfiguration() {
-        logger.debug("Loading configuration from file!");
-        timeWindowCount = 3;
-        timeWindowLength = 5;
 
         // TODO: load configuration from file
+        timeWindowCount = Constants.TIME_WINDOW_COUNT;
+        timeWindowLength = Constants.TIME_WINDOW_LENGTH;
+
         /*
         Properties properties = new Properties();
         properties.load(new FileInputStream(""));
@@ -30,13 +33,14 @@ public class MonitorConfiguration {
     }
 
     /**
-     * Singal model for creating an instance
+     * Singleton pattern for creating an instance
      *
      * @return
      */
     public synchronized static MonitorConfiguration getInstance() {
-        if (instance == null)
+        if (instance == null) {
             instance = new MonitorConfiguration();
+        }
         return instance;
     }
 
