@@ -9,6 +9,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * @author yitian
+ */
 public class LoadMonitor {
 
     /**
@@ -27,7 +30,7 @@ public class LoadMonitor {
     Map<Long, Long> loadHistory;
 
     private LoadMonitor() {
-        // get core=0 processor's speed to cpuSpeed
+        // get core = 0 processor's speed to cpuSpeed
         cpuSpeed = CPUInfo.getInstance().getCoreInfo(0).getSpeed();
     }
 
@@ -41,6 +44,7 @@ public class LoadMonitor {
         // get current load
         Map<Long, Long> currentLoadInfo = new HashMap<Long, Long>();
         ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
+
         // get current thread load (cpu time)
         for (long id : threadIds) {
             currentLoadInfo.put(id, threadMXBean.getThreadCpuTime(id));

@@ -9,6 +9,8 @@ import java.util.Map;
 
 /**
  * Add: 2018-09-27
+ * @author yitian
+ *
  * For monitoring the cpu usage of each host (worker node)
  * <p>
  * This main function should be invoked by user manually.
@@ -26,8 +28,8 @@ public class SystemMonitorThread extends Thread {
     private void cpuUsageMonitor() throws SQLException {
         // 2018-09-27 add load usage of each host(worker node)
         Map<String, String> hostCpuUsageList = DataManager.getInstance().getCpuUsageOfHost();
+
         for (String hostname : hostCpuUsageList.keySet()) {
-            System.out.println("Now:" + hostname + " : " + hostCpuUsageList.get(hostname));
             FileUtils.writeToFile(Constants.CPU_USAGE_FILE, hostname + " : " + hostCpuUsageList.get(hostname));
         }
     }
@@ -42,10 +44,5 @@ public class SystemMonitorThread extends Thread {
                 e.printStackTrace();
             }
         }
-    }
-
-    // main function
-    public static void main(String[] args) {
-        new SystemMonitorThread().start();
     }
 }

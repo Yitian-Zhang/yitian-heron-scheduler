@@ -9,6 +9,9 @@ import java.lang.management.RuntimeMXBean;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * @author yitian
+ */
 public class TaskMonitor {
 
     private Logger logger = Logger.getLogger(WorkerMonitor.class);
@@ -24,8 +27,7 @@ public class TaskMonitor {
     private long threadId;
 
     /**
-     * Add from yitian 2018-04-29
-     * java process id
+     * Java process id
      */
     private String processId;
 
@@ -47,23 +49,21 @@ public class TaskMonitor {
     private Map<Integer, Integer> trafficStatToReturn;
 
     /**
-     * Constructer function
-     * set task id, and init threadId = -1, it will be changed at checkThreadId function
+     * Set task id, and init threadId = -1, it will be changed at checkThreadId function
      *
      * @param taskId
      */
     public TaskMonitor(int taskId) {
         this.taskId = taskId;
-        threadId = -1;
-        // add from yitian 2018-04-29
-        processId = "";
-        timeWindowLength = MonitorConfiguration.getInstance().getTimeWindowLength() * 1000;
-        trafficStatMap = new HashMap<Integer, Integer>();
+        this.threadId = -1;
+        this.processId = "";
+        this.timeWindowLength = MonitorConfiguration.getInstance().getTimeWindowLength() * 1000;
+        this.trafficStatMap = new HashMap<>();
     }
 
     /**
-     * Add from yitian 2018-04-29
      * Get java process id for this thread
+     *
      * @return processId
      */
     private static String getCurrentJVMProcessId() {
@@ -73,22 +73,22 @@ public class TaskMonitor {
     }
 
     /**
-     * Check current Thread Id whether is -1(init) or not. If it is, give the threaId currentThreadId value
-     * And, registerTask to WorkerMonitor
+     * Check current Thread Id whether is -1(init) or not.
+     * If it is, give the threaId currentThreadId value. And, register Task to WorkerMonitor
      */
     public void checkThreadId() {
         if (threadId == -1) {
             // get current thread id
             threadId = Thread.currentThread().getId();
-            // add from yitian 2018-04-29
             processId = getCurrentJVMProcessId();
+
             // should registerTask (this function located at WorkerMonitor.java)
             WorkerMonitor.getInstance().registerTask(this);
         }
     }
 
     /**
-     * Storm Brench mark: WordCount bolt execute function invoke
+     * Storm Benchmark: WordCount bolt execute function invoke
      *
      * @param tuple current execute tuple
      */
@@ -109,17 +109,18 @@ public class TaskMonitor {
         if (lastCheck == 0) {
             lastCheck = now;
         }
+
         // if the result > slotLength = timeWindowLength
         if (now - lastCheck >= timeWindowLength) {
             synchronized (this) {
                 trafficStatToReturn = trafficStatMap;
-                trafficStatMap = new HashMap<Integer, Integer>();
+                trafficStatMap = new HashMap<>();
                 lastCheck += timeWindowLength;
             }
         }
     }
 
-    /*
+    /**
      * source task -> number of tuples sent to this task
      * WorkerMoniter function invoke : sampleStats
      */

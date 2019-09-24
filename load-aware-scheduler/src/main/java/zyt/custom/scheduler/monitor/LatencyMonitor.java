@@ -1,5 +1,6 @@
 package zyt.custom.scheduler.monitor;
 
+import org.apache.commons.collections4.CollectionUtils;
 import zyt.custom.scheduler.Constants;
 import zyt.custom.scheduler.MonitorConfiguration;
 import zyt.custom.tools.FileUtils;
@@ -9,9 +10,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * @author yitian
+ */
 public class LatencyMonitor {
 
     private static LatencyMonitor instance = null;
+
     /**
      * latency monitor file URL
      * Windows: filename = "D:\\logs\\latecny-test.txt";
@@ -31,11 +36,8 @@ public class LatencyMonitor {
 
     private int timeWindowCount;
 
-    /**
-     * construction function without args
-     */
     public LatencyMonitor() {
-        FileUtils.writeToFile(LOG_FILE, "Construction LatencyMonitor...");
+        FileUtils.writeToFile(LOG_FILE, "Construction LatencyMonitor.");
         timeWindowLength = MonitorConfiguration.getInstance().getTimeWindowLength() * 1000;
         latencyMap = new HashMap<>();
         latencyMapReturn = new HashMap<>();
@@ -44,12 +46,13 @@ public class LatencyMonitor {
 
         // start latency monitor thread
         new LatencyMonitorThread().start();
-        FileUtils.writeToFile(LOG_FILE, "Latency Monitor Thread started...");
+        FileUtils.writeToFile(LOG_FILE, "Latency Monitor Thread started.");
     }
 
     public synchronized static LatencyMonitor getInstance() {
-        if (instance == null)
+        if (instance == null) {
             instance = new LatencyMonitor();
+        }
         return instance;
     }
 
@@ -62,7 +65,7 @@ public class LatencyMonitor {
     public void setContent(String taskId, long latency) {
         // get the latency list of the taskId
         List<Long> latencyList = latencyMap.get(taskId);
-        if (latencyList == null) {
+        if (CollectionUtils.isEmpty(latencyList)) {
             latencyList = new ArrayList<>();
             latencyMap.put(taskId, latencyList);
         }
@@ -74,10 +77,10 @@ public class LatencyMonitor {
         }
         if (now - lastCheck >= timeWindowLength) {
             synchronized (this) {
-                FileUtils.writeToFile(LOG_FILE, "Synchronized Latency Map...");
                 latencyMapReturn = latencyMap;
                 latencyMap = new HashMap<>();
                 lastCheck += timeWindowLength;
+                FileUtils.writeToFile(LOG_FILE, "Synchronized Latency Map.");
             }
         }
     }
@@ -100,6 +103,7 @@ public class LatencyMonitor {
             FileUtils.writeToFile(LOG_FILE, "Current store taskId: " + taskId);
             // get the latency list of the current taskid
             List<Long> latencyList = latencyMap.get(taskId);
+
             // get the size of the latency list
             int count = latencyList.size();
             FileUtils.writeToFile(LOG_FILE, "This tuple latency list size: " + count);
@@ -111,8 +115,6 @@ public class LatencyMonitor {
 
             FileUtils.writeToFile(LOG_FILE, "The total tuple latency in time window: " + totalLatency);
             double averageLatency = totalLatency / count;
-            // 2018-07-23 add for simple logs
-//            FileUtils.writeToFile(this.filename, "Current task id: " + taskId + " and the average latency: " + averageLatency + " in window: " + timeWindowCount);
             FileUtils.writeToFile(Constants.LATENCY_FILE, taskId + " : " +
                     String.format("%.2f", averageLatency) + " -> in windows: " + timeWindowCount);
         }
@@ -120,7 +122,6 @@ public class LatencyMonitor {
     }
 
     public synchronized Map<String, List<Long>> getLatencyMap() {
-        FileUtils.writeToFile(LOG_FILE, "Invoke Latency Return Map Function...");
         return latencyMapReturn;
     }
 

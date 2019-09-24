@@ -2,6 +2,9 @@ package zyt.custom.scheduler.monitor;
 
 import zyt.custom.scheduler.MonitorConfiguration;
 
+/**
+ * @author yitian
+ */
 public class LatencyMonitorThread extends Thread {
 
     /**

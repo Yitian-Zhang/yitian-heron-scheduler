@@ -61,7 +61,7 @@ public class WorkerMonitor {
     /**
      * 2018-09-27 add for recording the cpu usage
      */
-//    private String cpuUsageFilename = "/home/yitian/logs/cpu-usage.txt";
+    private String cpuUsageFilename = "/home/yitian/logs/cpu-usage.txt";
 
 
     private WorkerMonitor() {
@@ -169,7 +169,7 @@ public class WorkerMonitor {
         // get traffic of this taskPair from trafficStats
         List<Integer> trafficList = trafficStats.get(taskPair);
         if (trafficList == null) { // if is initiable
-            trafficList = new ArrayList<Integer>();
+            trafficList = new ArrayList<>();
             trafficStats.put(taskPair, trafficList);
         }
         trafficList.add(traffic);
@@ -192,7 +192,7 @@ public class WorkerMonitor {
         // loadStats: ThreadId -> time series of the load
         List<Long> loadList = loadStats.get(threadId);
         if (loadList == null) {
-            loadList = new ArrayList<Long>();
+            loadList = new ArrayList<>();
             loadStats.put(threadId, loadList);
         }
         loadList.add(load);
