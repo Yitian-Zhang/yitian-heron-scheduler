@@ -27,7 +27,7 @@ public class DataManager {
     private Logger logger = Logger.getLogger(DataManager.class);
 
     /**
-     * 单例模式
+     * singleton pattern
      */
     private static DataManager instance = null;
 
@@ -74,8 +74,9 @@ public class DataManager {
     }
 
     public static synchronized DataManager getInstance() {
-        if (instance == null)
+        if (instance == null) {
             instance = new DataManager();
+        }
         return instance;
     }
 

@@ -2,6 +2,9 @@ package zyt.custom.scheduler.monitor;
 
 import zyt.custom.scheduler.MonitorConfiguration;
 
+/**
+ * @author yitian
+ */
 public class WorkerMonitorThread extends Thread {
 
     /**
@@ -17,14 +20,11 @@ public class WorkerMonitorThread extends Thread {
         while (true) {
             try {
                 Thread.sleep(timeWindowLength * 1000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
 
-            try {
                 // synchronized invoking workermoniter functions
                 WorkerMonitor.getInstance().sampleStats();
                 WorkerMonitor.getInstance().storeStats();
+
             } catch (Exception e) {
                 e.printStackTrace();
             }

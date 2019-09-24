@@ -17,11 +17,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * @author yitian
+ */
 public class WorkerMonitor {
+    private Logger logger = Logger.getLogger(WorkerMonitor.class);
 
     private static WorkerMonitor instance = null;
 
-    private Logger logger = Logger.getLogger(WorkerMonitor.class);
     /**
      * Worker corresponding topology
      */
@@ -44,7 +47,8 @@ public class WorkerMonitor {
 
     /**
      * threadId -> list of tasks id, in the formed [begin task, end task] = Executor
-     * A thread can running some task in storm. it has changed in heron. There is only one task in a thread.
+     * A thread can running some task in storm.
+     * It has changed in heron. There is only one task in a thread.
      */
     private Map<Long, Executor> threadToTaskMap;
 
@@ -54,29 +58,27 @@ public class WorkerMonitor {
 
     private int timeWindowLength;
 
-
-
-    // 2018-09-27 add for recording the cpu usage
+    /**
+     * 2018-09-27 add for recording the cpu usage
+     */
 //    private String cpuUsageFilename = "/home/yitian/logs/cpu-usage.txt";
 
 
     private WorkerMonitor() {
-        loadStats = new HashMap<Long, List<Long>>();
-        trafficStats = new HashMap<TaskPair, List<Integer>>();
+        loadStats = new HashMap<>();
+        trafficStats = new HashMap<>();
+        threadToTaskMap = new HashMap<>();
+        taskMonitorList = new ArrayList<>();
 
-        // threadToTaskMap
-        threadToTaskMap = new HashMap<Long, Executor>();
-        taskMonitorList = new ArrayList<TaskMonitor>();
         timeWindowCount = MonitorConfiguration.getInstance().getTimeWindowCount();
         timeWindowLength = MonitorConfiguration.getInstance().getTimeWindowLength();
 
-        // should invoke DataManager to check node state 2018-05-08---------------
+        // should invoke DataManager to check node state. 2018-05-08
         try {
             DataManager.getInstance().checkNode(CPUInfo.getInstance().getTotalSpeed());
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        // -----------------------------------------------------------------------
 
         // record cpu total speed
         logger.info("[WORKER-MONITOR] - Cpu total speed: " + CPUInfo.getInstance().getTotalSpeed());
@@ -87,8 +89,9 @@ public class WorkerMonitor {
     }
 
     public synchronized static WorkerMonitor getInstance() {
-        if (instance == null)
+        if (instance == null) {
             instance = new WorkerMonitor();
+        }
         return instance;
     }
 
@@ -112,10 +115,10 @@ public class WorkerMonitor {
             executor.add(taskMonitor.getTaskId());
         }
 
-        // add to taskmonitorlist
+        // add to taskMonitorList
         taskMonitorList.add(taskMonitor);
 
-        // 2018-07-23 annotated for simple logs -----------------
+        // 2018-07-23 annotated for simple logs
         /*
         logger.info("----------Output threadToTaskMap----------");
         for (long threadId : threadToTaskMap.keySet()) {
@@ -130,10 +133,11 @@ public class WorkerMonitor {
     }
 
     /**
-     * invode at WorkerMonitorThread
+     * invoke at WorkerMonitorThread
      */
     public synchronized void sampleStats() {
         logger.info("[WORKER-MONITOR] - Starting sampleStats...");
+
         // record traffic, there are each tackMonitor in each spout or bolt
         for (TaskMonitor taskMonitor : taskMonitorList) {
             // trafficStatMap: source task id -> number of tuples sent by source to this task
@@ -141,12 +145,12 @@ public class WorkerMonitor {
             if (taskTrafficStats != null) {
                 for (int sourceTaskId : taskTrafficStats.keySet()) {
                     // invoke notifyLoadStat function in this class
-                    notifyTrafficStat(
-                            new TaskPair(sourceTaskId, taskMonitor.getTaskId()),
+                    notifyTrafficStat(new TaskPair(sourceTaskId, taskMonitor.getTaskId()),
                             taskTrafficStats.get(sourceTaskId));
                 }
             }
         }
+
         // load : invoke loadMonitor function
         Map<Long, Long> loadInfo = LoadMonitor.getInstance().getLoadInfo(threadToTaskMap.keySet());
         for (long threadId : loadInfo.keySet()) {
@@ -201,34 +205,30 @@ public class WorkerMonitor {
      * Store stats to logger files (not to store DB)
      */
     public void storeStats() throws Exception {
-        logger.info("[WORKER-MONITOR] - Start store stats into file...");
-        logger.debug("------------------WORKER MONITOR SNAPSHOT START------------------");
-        logger.debug("Topology id: " + topologyId);
+        logger.info("[WORKER-MONITOR] - Start store stats into file. TopologyId: " + topologyId);
 
-        // 2018-07-06 add ----------------------------------------
+        logger.debug("------------------WORKER MONITOR SNAPSHOT START------------------");
         logger.debug("Current InterNode Traffic is: " + DataManager.getInstance().getCurrentInterNodeTraffic());
         logger.debug("This Topology current total load is: " + DataManager.getInstance().getTotalLoad(topologyId));
-        // -------------------------------------------------------
-
-        // 2018-07-23 add for simple logs ------------------
+        // 2018-07-23 add for simple logs
         /*
         if (taskMonitorList.size() != 0) {
             FileUtils.writeToFile(trafficFilename, taskMonitorList.get(0).getTaskId() + " : " + DataManager.getInstance().getCurrentInterNodeTraffic());
         }
         */
         FileUtils.writeToFile(Constants.TRAFFIC_DATA_FILE, taskMonitorList.get(0).getTaskId() + " : " + DataManager.getInstance().getCurrentInterNodeTraffic());
-        // -------------------------------------------------
 
-        logger.debug("Threads to Tasks association: ");
-        for (long threadId : threadToTaskMap.keySet())
+        // Output the threadToTaskMap
+        logger.debug("Threads to Tasks association is: ");
+        for (long threadId : threadToTaskMap.keySet()) {
             logger.debug(" - " + threadId + ": " + threadToTaskMap.get(threadId));
+        }
 
         logger.debug("Inter-Task Traffic Stats (tuples sent per time slot): ");
         for (TaskPair pair : trafficStats.keySet()) {
             logger.debug(" - " + pair.getSourceTaskId() + " -> " + pair.getDestinationTaskId() + ": " + getTraffic(pair) + " tuple/s [" + Utils.collectionToString(trafficStats.get(pair)) + "]");
-            // invoke DataManager function to store Traffic info 2018-05-08-------------
+            // invoke DataManager function to store Traffic info. 2018-05-08
             DataManager.getInstance().storeTraffic(topologyId, pair.getSourceTaskId(), pair.getDestinationTaskId(), getTraffic(pair));
-            // -------------------------------------------------------------------------
         }
 
         logger.debug("Load stats (CPU cycles consumed per time slot): ");
@@ -239,30 +239,28 @@ public class WorkerMonitor {
             logger.debug(" - thread " + threadId + ": " + getLoad(threadId) + " cycle/s [" + Utils.collectionToString(threadLoadInfo) + "]");
 
             Executor executor = threadToTaskMap.get(threadId);
-            // invoke DataMananger to store load info 2018-05-08 -------------------
+            // invoke DataMananger to store load info. 2018-05-08
             DataManager.getInstance().storeCpuLoad(topologyId, executor.getBeginTask(), executor.getEndTask(), getLoad(threadId));
-            // ---------------------------------------------------------------------
 
         }
         long totalCPUCyclesAvailable = CPUInfo.getInstance().getTotalSpeed();
         double usage = ((double) totalCPUCyclesPerSecond / totalCPUCyclesAvailable) * 100; // int -> double
         logger.debug("Total CPU cycles consumed per second: " + totalCPUCyclesPerSecond + ", Total available: " + totalCPUCyclesAvailable + ", Usage: " + usage + "%");
 
-        // add from yitian 2018-04-29 ------------------------------
+        // add from yitian 2018-04-29
         logger.debug("Output the TaskMonitorList: ");
         for (TaskMonitor monitor : taskMonitorList) {
             logger.debug("- ProcessId: " + monitor.getProcessId() + " -> threadId: " + monitor.getThreadId() + " -> taskId: " + monitor.getTaskId());
         }
-        // 2018-09-27 add load usage of each host(worker node) -----------------------------------------
+
+        // 2018-09-27 add load usage of each host(worker node)
         /*
         Map<String, String> hostCpuUsageList = DataManager.getInstance().getCpuUsageOfHost();
         for (String hostname : hostCpuUsageList.keySet()) {
             FileUtils.writeToFile(cpuUsageFilename, hostname + " : " + hostCpuUsageList.get(hostname));
         }
         */
-        // ----------------------------------------------------------------------------------
         logger.debug("------------------WORKER MONITOR SNAPSHOT END------------------");
-        // ---------------------------------------------------------
     }
 
     /**
@@ -304,8 +302,12 @@ public class WorkerMonitor {
     public void setContextInfo(TopologyContext context) {
         this.topologyId = context.getTopologyId();
         logger.info("[WORKER-MONITOR] - This ComponentId is: " + context.getThisComponentId());
-        // invoke DataManager: checkTopology to check topology
-//        DataManager.getInstance().checkTopology(topologyId);
+
+        // TODO: multi-topologies
+        /*
+            invoke DataManager: checkTopology to check topology
+            DataManager.getInstance().checkTopology(topologyId);
+         */
     }
 
     public String getTopologyId() {
