@@ -1,5 +1,8 @@
 package zyt.custom.scheduler.component;
 
+/**
+ * @author yitian
+ */
 public class Instance {
 
     private Integer instanceId;

@@ -1,5 +1,8 @@
 package zyt.custom.scheduler.component;
 
+/**
+ * @author yitian
+ */
 public class ExecutorPair {
 
     /**
@@ -83,8 +86,6 @@ public class ExecutorPair {
 
     @Override
     public String toString() {
-        //##20181108  simple output in LOG
-//		return "{" + source + " -> " + destination + ": " + traffic + " tuple/s}";
         return "{" + source.getBeginTask() + " -> " + destination.getBeginTask() + ": " + traffic + " tuple/s}";
     }
 }
