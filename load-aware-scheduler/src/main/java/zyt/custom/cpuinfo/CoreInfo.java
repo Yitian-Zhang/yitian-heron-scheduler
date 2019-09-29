@@ -1,10 +1,13 @@
 package zyt.custom.cpuinfo;
 
 /**
- * 机器CPU core详情
+ * CPU core info
  */
 public class CoreInfo {
 
+    /**
+     * The number of processor in the CPU
+     */
     public static final String ID_PROPERTY = "processor";
 
     public static final String MODEL_NAME_PROPERTY = "model name";

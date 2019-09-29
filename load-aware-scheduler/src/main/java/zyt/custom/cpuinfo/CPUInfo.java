@@ -11,6 +11,9 @@ import java.util.Map;
  */
 public class CPUInfo {
 
+    /**
+     * The property file of CPU in Linux
+     */
     private static final String CPU_INFO_FILE = "/proc/cpuinfo";
 
     @SuppressWarnings("unused")
@@ -18,16 +21,19 @@ public class CPUInfo {
 
     private static CPUInfo instance = null;
 
-    private Map<Integer, CoreInfo> cores; // coreInfo in CPU
-
-    private long totalSpeed; // Cpu totalspeed
+    /**
+     * coreInfo in CPU
+     */
+    private Map<Integer, CoreInfo> cores;
 
     /**
-     * construction function
+     * CPU total speed
      */
+    private long totalSpeed;
+
     private CPUInfo() {
-        cores = new HashMap<Integer, CoreInfo>();
-        totalSpeed = -1; // initilizea to -1
+        cores = new HashMap<>();
+        totalSpeed = -1;
         try {
             loadInfo();
         } catch (Exception e) {
@@ -35,14 +41,10 @@ public class CPUInfo {
         }
     }
 
-    /**
-     * synchronized create an instance
-     *
-     * @return
-     */
     public synchronized static CPUInfo getInstance() {
-        if (instance == null)
+        if (instance == null) {
             instance = new CPUInfo();
+        }
         return instance;
     }
 
@@ -62,30 +64,36 @@ public class CPUInfo {
     public long getTotalSpeed() {
         if (totalSpeed == -1) {
             totalSpeed = 0;
-            for (CoreInfo core : cores.values())
+            for (CoreInfo core : cores.values()) {
                 totalSpeed += core.getSpeed();
+            }
         }
         return totalSpeed;
     }
 
     /**
      * invoke when constructed
+     *
      * @throws Exception
      */
     private void loadInfo() throws Exception {
+        // read the property file from Linux OS
         BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(CPU_INFO_FILE)));
         String line = null;
-        int processor = -1; //
+        int processor = -1;
         String model_name = "";
         long speed = 0;
+
         while ((line = br.readLine()) != null) {
             if (line.indexOf(':') > -1) {
                 String key = getKey(line);
                 String value = getValue(line);
 
-                if (key.equals(CoreInfo.ID_PROPERTY)) { // CoreInfo.ID_PROPERTY = "processor"
+                if (key.equals(CoreInfo.ID_PROPERTY)) {
                     if (processor > -1) {
-                        cores.put(processor, new CoreInfo(processor, model_name, speed)); // add coreinfo to cores(A map)
+                        // processor_id -> CoreInfo(id, modelName, speed)
+                        cores.put(processor, new CoreInfo(processor, model_name, speed));
+                        // re-init variables
                         processor = -1;
                         model_name = "";
                         speed = 0;
@@ -93,11 +101,12 @@ public class CPUInfo {
                     processor = Integer.parseInt(value);
                 }
 
-                if (key.equals(CoreInfo.MODEL_NAME_PROPERTY))
+                if (key.equals(CoreInfo.MODEL_NAME_PROPERTY)) {
                     model_name = value;
-
-                if (key.equals(CoreInfo.SPEED_PROPERTY))
+                }
+                if (key.equals(CoreInfo.SPEED_PROPERTY)) {
                     speed = (long) Float.parseFloat(value) * 1024 * 1024; // MHz
+                }
             }
         }
         cores.put(processor, new CoreInfo(processor, model_name, speed));
