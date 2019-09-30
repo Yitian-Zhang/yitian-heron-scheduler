@@ -43,6 +43,7 @@ import java.util.logging.Logger;
  * 2018-07-18 noted:
  *      sovled reschedule core problem
  *
+ * TODO: reconstructe this class
  */
 public class AuroraSchedulerController {
     private static final Logger LOG = Logger.getLogger(AuroraSchedulerController.class.getName());
