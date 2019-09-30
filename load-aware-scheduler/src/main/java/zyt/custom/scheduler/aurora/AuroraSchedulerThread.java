@@ -4,7 +4,6 @@ import com.twitter.heron.spi.packing.PackingPlan;
 import zyt.custom.scheduler.DataManager;
 import zyt.custom.tools.FileUtils;
 import zyt.custom.scheduler.component.Node;
-
 import java.sql.SQLException;
 import java.util.List;
 
@@ -24,14 +23,14 @@ public class AuroraSchedulerThread extends Thread {
     private static final String FILE_NAME = "/home/yitian/logs/aurora-scheduler/aurora-scheduler.txt";
 
     /**
-     * 20181117 for trigger rescheduling of Load-aware scheduling
+     * Trigger rescheduling of Load-aware scheduling
      */
     private static final int RESCHEDULING_THRESHOLD = 20;
 
     private long lastRescheduling;
 
     /**
-     * while loop threshold value (60s)
+     * While loop threshold value (60s)
      */
     private int count = 0;
 
@@ -55,7 +54,7 @@ public class AuroraSchedulerThread extends Thread {
     @Override
     public void run() {
         // invoke hot-edge scheduling algorithm.
-        hotEdgeTriggering();
+//        hotEdgeTriggering();
 
         // invoke load-aware scheduling algorithm.
         loadAwareTriggering();
@@ -65,7 +64,7 @@ public class AuroraSchedulerThread extends Thread {
      * Original trigger conditions backup in 20181117
      * For DSC-Heron rescheduling algorithm
      *
-     * TODO: How to re-constructe this class to support multi-class implement?
+     * TODO: Re-construct this class to support multi-class implement
      */
     private void hotEdgeTriggering() {
         while (isStart) {
