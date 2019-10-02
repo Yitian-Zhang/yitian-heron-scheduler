@@ -17,9 +17,6 @@ import java.util.List;
  */
 public class AuroraSchedulerThread extends Thread {
 
-    /**
-     * Log file
-     */
     private static final String FILE_NAME = "/home/yitian/logs/aurora-scheduler/aurora-scheduler.txt";
 
     /**
@@ -139,7 +136,6 @@ public class AuroraSchedulerThread extends Thread {
             e.printStackTrace();
         }
 
-        // while loop
         while (isStart) {
             try {
                 System.out.println("[SCHEDULE-THREAD] - Then sleep for 10s ... Starting WorkNode load searching...");
