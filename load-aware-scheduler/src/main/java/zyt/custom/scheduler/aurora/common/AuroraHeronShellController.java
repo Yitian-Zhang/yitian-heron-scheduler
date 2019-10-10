@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package zyt.custom.scheduler.aurora;
+package zyt.custom.scheduler.aurora.common;
 
 import com.twitter.heron.proto.system.PhysicalPlans.StMgr;
 import com.twitter.heron.spi.common.Config;
@@ -40,14 +40,18 @@ import java.util.logging.Logger;
  * This class is to handle `restart backpressure containers inside container`,
  * while delegating to AuroraCLIController for all the other scenarios.
  */
-class AuroraHeronShellController implements AuroraController {
+public class AuroraHeronShellController implements AuroraController {
     private static final Logger LOG = Logger.getLogger(AuroraHeronShellController.class.getName());
 
     private final String topologyName;
     private final AuroraCLIController cliController;
     private final SchedulerStateManagerAdaptor stateMgrAdaptor;
 
-    AuroraHeronShellController(String jobName, String cluster, String role, String env,
+    /**
+     * This function is package-accessed by default.
+     * There is a modify in this implement.
+     */
+    public AuroraHeronShellController(String jobName, String cluster, String role, String env,
                                String auroraFilename, boolean isVerbose, Config localConfig)
             throws ClassNotFoundException, InstantiationException, IllegalAccessException {
         this.topologyName = jobName;

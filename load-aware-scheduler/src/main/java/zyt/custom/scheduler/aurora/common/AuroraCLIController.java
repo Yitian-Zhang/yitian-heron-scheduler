@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package zyt.custom.scheduler.aurora;
+package zyt.custom.scheduler.aurora.common;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.twitter.heron.spi.packing.PackingPlan;
@@ -28,14 +28,18 @@ import java.util.stream.Collectors;
  * Implementation of AuroraController that shells out to the Aurora CLI to control the Aurora
  * scheduler workflow of a topology.
  */
-class AuroraCLIController implements AuroraController {
+public class AuroraCLIController implements AuroraController {
     private static final Logger LOG = Logger.getLogger(AuroraCLIController.class.getName());
 
     private final String jobSpec;
     private final boolean isVerbose;
     private final String auroraFilename;
 
-    AuroraCLIController(
+    /**
+     * This function is package-accessed by default.
+     * There is a modify in this implement.
+     */
+    public AuroraCLIController(
             String jobName,
             String cluster,
             String role,
