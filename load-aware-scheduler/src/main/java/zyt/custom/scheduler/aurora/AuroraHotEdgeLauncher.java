@@ -50,10 +50,11 @@ public class AuroraHotEdgeLauncher implements ILauncher {
         return launcherUtils.onScheduleAsLibrary(config, ytruntime, getScheduler(), packing);
     }
 
-    // Get AuroraScheduler
+    /**
+     * Modified this to get the CustomScheduler instance.
+     */
     protected IScheduler getScheduler() {
-//        return new AuroraHotEdgeSchedulerWithTxtLog();
-//        return new AuroraSchedulerLockTest();
+        // create the instance of AuroraCustomScheduler.
         return new AuroraCustomScheduler();
     }
 }

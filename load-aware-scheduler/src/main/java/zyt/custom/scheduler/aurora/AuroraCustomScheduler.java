@@ -41,6 +41,13 @@ import java.util.logging.Logger;
 
 /**
  * AuroraCustomScheduler
+ *
+ *
+ * 20180718 for rescheduler-core ---------------------
+ * The content in this, which is the custom code for
+ * custom scheduler.
+ * ---------------------------------------------------
+ *
  * @author yitian
  *
  */
@@ -58,11 +65,11 @@ public class AuroraCustomScheduler implements IScheduler, IScalable {
 
     private UpdateTopologyManager updateTopologyManager;
 
-    // 20180718 for rescheduler-core --------------------------------------------------------------
+    // 20180718 for rescheduler-core ---------------------
     private AuroraSchedulerController schedulerController;
 
     private TopologyAPI.Topology topology;
-    // ----------------------------------------------------------------------------------------
+    // ---------------------------------------------------
 
     @Override
     public void initialize(Config mConfig, Config mRuntime) {
@@ -73,6 +80,7 @@ public class AuroraCustomScheduler implements IScheduler, IScalable {
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
             LOG.severe("AuroraController initialization failed " + e.getMessage());
         }
+
         this.updateTopologyManager = new UpdateTopologyManager(config, runtime, Optional.<IScalable>of(this));
 
         // 0718 for rescheduler-core --------------------------------------
@@ -217,7 +225,9 @@ public class AuroraCustomScheduler implements IScheduler, IScalable {
         return true;
     }
 
-    // 0.17.5 updated
+    /**
+     * updated for 0.17.5 version
+     */
     @Override
     public Set<PackingPlan.ContainerPlan> addContainers(
             Set<PackingPlan.ContainerPlan> containersToAdd) {
@@ -229,6 +239,7 @@ public class AuroraCustomScheduler implements IScheduler, IScalable {
                     "Aurora returned differnt countainer count " + newAddedContainerIds.size()
                             + "; input count was " + containersToAdd.size());
         }
+
         Set<PackingPlan.ContainerPlan> remapping = new HashSet<>();
         // Do the remapping:
         // use the `newAddedContainerIds` to replace the container id in the `containersToAdd`
@@ -248,7 +259,9 @@ public class AuroraCustomScheduler implements IScheduler, IScalable {
         controller.removeContainers(containersToRemove);
     }
 
-    // 0.17.5 updated
+    /**
+     * updated for 0.17.5 version
+     */
     protected Map<AuroraField, String> createAuroraProperties(Resource containerResource) {
         Map<AuroraField, String> auroraProperties = new HashMap<>();
 
