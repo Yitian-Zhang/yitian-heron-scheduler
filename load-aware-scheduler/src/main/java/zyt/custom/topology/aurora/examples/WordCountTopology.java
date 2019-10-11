@@ -33,6 +33,7 @@ import com.twitter.heron.common.basics.ByteAmount;
 import zyt.custom.scheduler.monitor.LatencyMonitor;
 import zyt.custom.scheduler.monitor.TaskMonitor;
 import zyt.custom.scheduler.monitor.WorkerMonitor;
+import zyt.custom.topology.common.TopologyConstants;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -40,9 +41,9 @@ import java.util.Random;
 import java.util.UUID;
 
 /**
- * This is a topology that does simple word counts.
- * <p>
- * In this topology,
+ * Topology Introduction
+ *
+ * This is a topology that does simple word counts. In this topology,
  * 1. the spout task generate a set of random words during initial "open" method.
  * (~128k words, 20 chars per word)
  * 2. During every "nextTuple" call, each spout simply picks a word at random and emits it
@@ -51,15 +52,24 @@ import java.util.UUID;
  * 4. Bolts maintain an in-memory map, which is keyed by the word emitted by the spouts,
  * and updates the count when it receives a tuple.
  *
- * updated: 2018-09-12
+ * Updated for monitoring the latency and CPU load information.
+ *
+ * xxxx -------------------------------------------------------
+ * In this content, there is the code to monitor some metrics.
+ * Including:
+ * 1. Task Monitor
+ * 2. Latency Monitor
+ * 3. Load Monitor
+ * ------------------------------------------------------------
+ *
+ * 2018-09-12
+ * @author yitian
  */
 public final class WordCountTopology {
+
     private WordCountTopology() {
     }
 
-    /**
-     * Main method
-     */
     public static void main(String[] args) throws AlreadyAliveException, InvalidTopologyException {
         if (args.length < 1) {
             throw new RuntimeException("Specify topology name");
@@ -74,13 +84,23 @@ public final class WordCountTopology {
         builder.setBolt("consumer", new ConsumerBolt(), 7)
                 .fieldsGrouping("word", new Fields("word")); // default parallelism
         Config conf = new Config();
-        conf.setNumStmgrs(3); // changed this value for RR algorithm
 
-        // 2018-09-12 add for benchmark4**********************************************
-        conf.setMaxSpoutPending(1000); // modified for latency
-        conf.setMessageTimeoutSecs(60); // modified for latency
-        conf.setTopologyReliabilityMode(Config.TopologyReliabilityMode.ATLEAST_ONCE); // latency shows config
-        // ***************************************************************************
+        // default configure container resources
+        /*
+        conf.setContainerDiskRequested(
+                ExampleResources.getContainerDisk(2 * parallelism, parallelism)); // 2G
+        conf.setContainerRamRequested(
+                ExampleResources.getContainerRam(2 * parallelism, parallelism)); // 1G
+        conf.setContainerCpuRequested(2); // 2cores
+         */
+
+        // changed this value based on your experiment environment.
+        conf.setNumStmgrs(3);
+
+        // 2018-09-12 add for benchmark4
+        conf.setMaxSpoutPending(TopologyConstants.EXAMPLE_WORDCOUNT_PENDING);
+        conf.setMessageTimeoutSecs(TopologyConstants.EXAMPLE_WORDCOUNT_TIMEOUT);
+        conf.setTopologyReliabilityMode(Config.TopologyReliabilityMode.ATLEAST_ONCE);
 
         // configure component resources
         conf.setComponentRam("word",
@@ -88,23 +108,17 @@ public final class WordCountTopology {
         conf.setComponentRam("consumer",
                 ByteAmount.fromMegabytes(ExampleResources.COMPONENT_RAM_MB)); // 512mb
 
-        // configure container resources
-//        conf.setContainerDiskRequested(
-//                ExampleResources.getContainerDisk(2 * parallelism, parallelism)); // 2G
-//        conf.setContainerRamRequested(
-//                ExampleResources.getContainerRam(2 * parallelism, parallelism)); // 1G
-//        conf.setContainerCpuRequested(2); // 2cores
-
-        // 2018-9-10 changed it for mesos rescource allocation test
         // this configuration is the max value of an container
-        conf.setContainerDiskRequested(ByteAmount.fromGigabytes(3)); // 6G
-        conf.setContainerRamRequested(ByteAmount.fromGigabytes(3)); // 4G
-        conf.setContainerCpuRequested(2); // 4
+        conf.setContainerDiskRequested(ByteAmount.fromGigabytes(TopologyConstants.EXAMPLE_CONTAINER_DISK_REQUESTED)); // 6G
+        conf.setContainerRamRequested(ByteAmount.fromGigabytes(TopologyConstants.EXAMPLE_CONTAINER_RAM_REQUESTED)); // 4G
+        conf.setContainerCpuRequested(TopologyConstants.EXAMPLE_CONTAINER_CPU_REQUESTED); // 4
 
         HeronSubmitter.submitTopology(args[0], conf, builder.createTopology());
     }
 
-    // Utils class to generate random String at given length
+    /**
+     * Utils class to generate random String at given length
+     */
     public static class RandomString {
         private final char[] symbols;
 
@@ -155,7 +169,7 @@ public final class WordCountTopology {
 
         private SpoutOutputCollector collector;
 
-        // deployed load monitor -------------------------------------------------------
+        // Deployed load monitor -------------------------------------------------------
         private TaskMonitor taskMonitor;
         // -----------------------------------------------------------------------------
         // deployed latency monitor ------------------------
@@ -201,8 +215,13 @@ public final class WordCountTopology {
 
         @Override
         public void nextTuple() {
-//            int nextInt = rnd.nextInt(ARRAY_LENGTH);
-//            collector.emit(new Values(words[nextInt]));
+
+            // default content
+            /*
+            int nextInt = rnd.nextInt(ARRAY_LENGTH);
+            collector.emit(new Values(words[nextInt]));
+             */
+
             // deployed load monitor -------------------------------------------------------
             taskMonitor.checkThreadId();
             // -----------------------------------------------------------------------------
@@ -249,7 +268,6 @@ public final class WordCountTopology {
         // deployed load monitor -------------------------------------------------------
         private TaskMonitor taskMonitor;
         // -----------------------------------------------------------------------------
-
 
         @SuppressWarnings("rawtypes")
         public void prepare(Map map, TopologyContext topologyContext, OutputCollector outputCollector) {

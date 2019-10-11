@@ -30,24 +30,13 @@ import com.twitter.heron.api.tuple.Tuple;
 import com.twitter.heron.api.tuple.Values;
 import com.twitter.heron.common.basics.ByteAmount;
 import zyt.custom.scheduler.monitor.LatencyMonitor;
+import zyt.custom.topology.common.ExampleResources;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
 
-/**
- * This is a WordCountTopology that does simple word counts.
- * <p>
- * In this WordCountTopology,
- * 1. the spout task generate a set of random words during initial "open" method.
- * (~128k words, 20 chars per word)
- * 2. During every "nextTuple" call, each spout simply picks a word at random and emits it
- * 3. Spouts use a fields grouping for their output, and each spout could send tuples to
- * every other bolt in the WordCountTopology
- * 4. Bolts maintain an in-memory map, which is keyed by the word emitted by the spouts,
- * and updates the count when it receives a tuple.
- */
 public final class AuroraWordCountLatencyTopology {
     private AuroraWordCountLatencyTopology() {
     }
