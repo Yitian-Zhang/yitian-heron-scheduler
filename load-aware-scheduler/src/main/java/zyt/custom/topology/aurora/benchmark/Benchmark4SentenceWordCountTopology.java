@@ -39,10 +39,11 @@ import java.util.Random;
 import java.util.UUID;
 
 /**
- * ****************************************
- * add at 2018-07-06: running for test cluster that has 4 nodes
- * 2018-10-03: update for BW algorithm
- * ****************************************
+ * Building for test cluster that has 4 work nodes at 2018-07-06
+ *
+ * Update for BW algorithm at 2018-10-03
+ *
+ * @author yitian
  */
 public final class Benchmark4SentenceWordCountTopology {
     private Benchmark4SentenceWordCountTopology() {
@@ -62,13 +63,11 @@ public final class Benchmark4SentenceWordCountTopology {
         builder.setBolt("count", new WordCount(), 5).fieldsGrouping("split", new Fields("word"));
 
         Config conf = new Config();
-        // 2018-07-06 add for benchmark4**********************************************
-        // maxspoutpending record: 1000->10000
+        // max-spout-pending record: 1000->10000
         conf.setMaxSpoutPending(1000); // modified for latency
         conf.setMessageTimeoutSecs(60); // modified for latency
         conf.setTopologyReliabilityMode(Config.TopologyReliabilityMode.ATLEAST_ONCE); // latency shows config
 //        conf.setContainerRamPadding(ByteAmount.fromGigabytes(1)); // for RR. default=2G
-        // ***************************************************************************
 
         // component resource configuration
         conf.setComponentRam("spout", ByteAmount.fromMegabytes(512));
@@ -85,7 +84,9 @@ public final class Benchmark4SentenceWordCountTopology {
         HeronSubmitter.submitTopology(name, conf, builder.createTopology());
     }
 
-    // Utils class to generate random String at given length
+    /**
+     * Utils class to generate random String at given length
+     */
     public static class RandomString {
         private final char[] symbols;
         private final Random random = new Random();
@@ -187,9 +188,6 @@ public final class Benchmark4SentenceWordCountTopology {
             taskMonitor.checkThreadId();
             // -----------------------------------------------------------------------------
 
-//            int nextInt = rnd.nextInt(ARRAY_LENGTH);
-//            collector.emit(new Values(sentences[nextInt]));
-
             // deployed latency monitor ------------------------
             spoutStartTime = System.currentTimeMillis(); // record spout start time
             // latency monitor using:
@@ -222,10 +220,8 @@ public final class Benchmark4SentenceWordCountTopology {
     }
 
     /**
-     * ****************************************
-     * 2018-05-26
      * stay extends BaseBasicBolt un-changed
-     * ****************************************
+     * 2018-05-26
      */
     public static class SplitSentence extends BaseBasicBolt {
         private static final long serialVersionUID = 1249629174039601217L;
@@ -260,10 +256,8 @@ public final class Benchmark4SentenceWordCountTopology {
     }
 
     /**
-     * ************************************
-     * 2018-05-26 udpate
      * modified BaseBasicBlot to BaseRichBolt to deployed latency monitor
-     * ************************************
+     * 2018-05-26 update
      */
     public static class WordCount extends BaseRichBolt {
         private static final long serialVersionUID = -8492566595062774310L;
@@ -277,36 +271,11 @@ public final class Benchmark4SentenceWordCountTopology {
         private OutputCollector collector;
         // ------------------------------------------
 
-//        @Override
-//        public void prepare(Map<String, Object> map, TopologyContext topologyContext) {
-//            // deployed load monitor -------------------------------------------------------
-//            WorkerMonitor.getInstance().setContextInfo(topologyContext);
-//            taskMonitor = new TaskMonitor(topologyContext.getThisTaskId());
-//            // -----------------------------------------------------------------------------
-//        }
-//
-//        @Override
-//        public void execute(Tuple tuple, BasicOutputCollector collector) {
-//            // deployed load monitor -------------------------------------------------------
-//            taskMonitor.notifyTupleReceived(tuple);
-//            // -----------------------------------------------------------------------------
-//
-//            String word = tuple.getString(0);
-//            Integer count = counts.get(word);
-//            if (count == null) {
-//                count = 0;
-//            }
-//            count++;
-//            counts.put(word, count);
-//            collector.emit(new Values(word, count));
-//        }
-
         @Override
         public void declareOutputFields(OutputFieldsDeclarer declarer) {
             declarer.declare(new Fields("word", "count"));
         }
 
-        // deployed latency monitor --------------------------------------------------------
         @Override
         public void prepare(Map<String, Object> map, TopologyContext topologyContext, OutputCollector outputCollector) {
             // deployed load monitor -------------------------------------------------------
@@ -336,6 +305,5 @@ public final class Benchmark4SentenceWordCountTopology {
             collector.ack(tuple);
             // ------------------------------------------
         }
-        // ---------------------------------------------------------------------------------
     }
 }

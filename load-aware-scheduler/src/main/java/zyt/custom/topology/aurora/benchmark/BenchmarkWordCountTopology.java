@@ -33,6 +33,7 @@ import com.twitter.heron.common.basics.ByteAmount;
 import zyt.custom.scheduler.monitor.LatencyMonitor;
 import zyt.custom.scheduler.monitor.TaskMonitor;
 import zyt.custom.scheduler.monitor.WorkerMonitor;
+import zyt.custom.topology.common.TopologyConstants;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -40,26 +41,16 @@ import java.util.Random;
 import java.util.UUID;
 
 /**
- * This is a topology that does simple word counts.
- * <p>
- * In this topology,
- * 1. the spout task generate a set of random words during initial "open" method.
- * (~128k words, 20 chars per word)
- * 2. During every "nextTuple" call, each spout simply picks a word at random and emits it
- * 3. Spouts use a fields grouping for their output, and each spout could send tuples to
- * every other bolt in the topology
- * 4. Bolts maintain an in-memory map, which is keyed by the word emitted by the spouts,
- * and updates the count when it receives a tuple.
+ * Benchmark topology for formal experiment with 6 work nodes.
+ * 2018-07-06
  *
- * updated: 2018-09-12
+ * @author yitian
  */
 public final class BenchmarkWordCountTopology {
+
     private BenchmarkWordCountTopology() {
     }
 
-    /**
-     * Main method
-     */
     public static void main(String[] args) throws AlreadyAliveException, InvalidTopologyException {
         if (args.length < 1) {
             throw new RuntimeException("Specify topology name");
@@ -74,33 +65,30 @@ public final class BenchmarkWordCountTopology {
         builder.setBolt("consumer", new ConsumerBolt(), 16)
                 .fieldsGrouping("word", new Fields("word")); // default parallelism
         Config conf = new Config();
-        conf.setNumStmgrs(6); // changed this value for RR algorithm
 
-        // 2018-09-12 add for benchmark4**********************************************
-        conf.setMaxSpoutPending(1000); // modified for latency
-        conf.setMessageTimeoutSecs(60); // modified for latency
-        conf.setTopologyReliabilityMode(Config.TopologyReliabilityMode.ATLEAST_ONCE); // latency shows config
-        // ***************************************************************************
-
-        // configure component resources
-        conf.setComponentRam("word",
-                ByteAmount.fromMegabytes(ExampleResources.COMPONENT_RAM_MB)); // 512mb
-        conf.setComponentRam("consumer",
-                ByteAmount.fromMegabytes(ExampleResources.COMPONENT_RAM_MB)); // 512mb
-
-        // configure container resources
+        // default configure container resources
 //        conf.setContainerDiskRequested(
 //                ExampleResources.getContainerDisk(2 * parallelism, parallelism)); // 2G
 //        conf.setContainerRamRequested(
 //                ExampleResources.getContainerRam(2 * parallelism, parallelism)); // 1G
 //        conf.setContainerCpuRequested(2); // 2cores
 
-        // 2018-9-10 changed it for mesos rescource allocation test
         // this configuration is the max value of an container
-        conf.setContainerDiskRequested(ByteAmount.fromGigabytes(3)); // 6G
-        conf.setContainerRamRequested(ByteAmount.fromGigabytes(3)); // 4G
-        conf.setContainerCpuRequested(2); // 4
+        conf.setContainerDiskRequested(ByteAmount.fromGigabytes(TopologyConstants.BENCHMARK_CONTAINER_DISK_REQUESTED)); // 6G
+        conf.setContainerRamRequested(ByteAmount.fromGigabytes(TopologyConstants.BENCHMARK_CONTAINER_RAM_REQUESTED)); // 4G
+        conf.setContainerCpuRequested(TopologyConstants.BENCHMARK_CONTAINER_CPU_REQUESTED); // 4
 
+        conf.setMaxSpoutPending(TopologyConstants.BENCHMARK_SPOUT_PENDING); // modified for latency
+        conf.setMessageTimeoutSecs(TopologyConstants.BENCHMARK_SPOUT_TIMEOUT); // modified for latency
+        conf.setTopologyReliabilityMode(Config.TopologyReliabilityMode.ATLEAST_ONCE); // latency shows config
+
+        // configure component resources
+        conf.setComponentRam("word",
+                ByteAmount.fromMegabytes(TopologyConstants.BENCHMARK_COMPONENT_RAM)); // 512mb
+        conf.setComponentRam("consumer",
+                ByteAmount.fromMegabytes(TopologyConstants.BENCHMARK_COMPONENT_RAM)); // 512mb
+
+        conf.setNumStmgrs(TopologyConstants.BENCHMARK_STMGR_NUM); // changed this value for RR algorithm
         HeronSubmitter.submitTopology(args[0], conf, builder.createTopology());
     }
 

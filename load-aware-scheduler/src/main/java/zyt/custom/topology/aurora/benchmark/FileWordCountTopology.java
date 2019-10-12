@@ -33,20 +33,21 @@ import zyt.custom.scheduler.monitor.LatencyMonitor;
 import zyt.custom.scheduler.monitor.TaskMonitor;
 import zyt.custom.scheduler.monitor.WorkerMonitor;
 import zyt.custom.tools.FileReader;
+import zyt.custom.topology.common.TopologyConstants;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
 /**
- * ****************************************
- * add at 2018-07-06: running for test cluster that has 4 nodes
- * 2018-10-03: update for BW algorithm
- * ****************************************
+ * Benchmark topology for formal experiment with 6 work nodes.
+ * 2018-07-06
+ *
+ * @author yitian
  */
 public final class FileWordCountTopology {
-    private FileWordCountTopology() {
 
+    private FileWordCountTopology() {
     }
 
     public static void main(String[] args) throws Exception {
@@ -61,28 +62,27 @@ public final class FileWordCountTopology {
         // benchmark for FORMAL_CLUSTER(8 Nodes), the parallelism =
         builder.setSpout("spout", new FileReadSpout(), 4);
         builder.setBolt("split", new SplitSentence(), 10).shuffleGrouping("spout");
-        builder.setBolt("count", new WordCount(), 10).fieldsGrouping("split", new Fields("word"));
+        builder.setBolt("count", new WordCount(), 10).fieldsGrouping("split",
+                new Fields("word"));
 
         Config conf = new Config();
-        // 2018-07-06 add for benchmark4**********************************************
         // maxspoutpending record: 1000->10000
         conf.setMaxSpoutPending(1000); // modified for latency
         conf.setMessageTimeoutSecs(60); // modified for latency
         conf.setTopologyReliabilityMode(Config.TopologyReliabilityMode.ATLEAST_ONCE); // latency shows config
 //        conf.setContainerRamPadding(ByteAmount.fromGigabytes(1)); // for RR. default=2G
-        // ***************************************************************************
 
         // component resource configuration
-        conf.setComponentRam("spout", ByteAmount.fromMegabytes(512));
-        conf.setComponentRam("split", ByteAmount.fromMegabytes(512));
-        conf.setComponentRam("count", ByteAmount.fromMegabytes(512)); // default: 512mb
+        conf.setComponentRam("spout", ByteAmount.fromMegabytes(TopologyConstants.BENCHMARK_COMPONENT_RAM));
+        conf.setComponentRam("split", ByteAmount.fromMegabytes(TopologyConstants.BENCHMARK_COMPONENT_RAM));
+        conf.setComponentRam("count", ByteAmount.fromMegabytes(TopologyConstants.BENCHMARK_COMPONENT_RAM)); // default: 512mb
 
         // container resource configuration
-        conf.setContainerDiskRequested(ByteAmount.fromGigabytes(3)); // default: 3g
-        conf.setContainerRamRequested(ByteAmount.fromGigabytes(3)); // default: 3g
-        conf.setContainerCpuRequested(2); // default: 2
+        conf.setContainerDiskRequested(ByteAmount.fromGigabytes(TopologyConstants.BENCHMARK_CONTAINER_DISK_REQUESTED)); // default: 3g
+        conf.setContainerRamRequested(ByteAmount.fromGigabytes(TopologyConstants.BENCHMARK_CONTAINER_RAM_REQUESTED)); // default: 3g
+        conf.setContainerCpuRequested(TopologyConstants.BENCHMARK_CONTAINER_CPU_REQUESTED); // default: 2
 
-        conf.setNumStmgrs(6);
+        conf.setNumStmgrs(TopologyConstants.BENCHMARK_STMGR_NUM);
 
         HeronSubmitter.submitTopology(name, conf, builder.createTopology());
     }

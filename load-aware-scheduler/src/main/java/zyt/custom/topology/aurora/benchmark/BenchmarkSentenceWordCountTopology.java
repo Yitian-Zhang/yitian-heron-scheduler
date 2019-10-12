@@ -29,9 +29,11 @@ import com.twitter.heron.api.tuple.Fields;
 import com.twitter.heron.api.tuple.Tuple;
 import com.twitter.heron.api.tuple.Values;
 import com.twitter.heron.common.basics.ByteAmount;
+import zyt.custom.scheduler.Constants;
 import zyt.custom.scheduler.monitor.LatencyMonitor;
 import zyt.custom.scheduler.monitor.TaskMonitor;
 import zyt.custom.scheduler.monitor.WorkerMonitor;
+import zyt.custom.topology.common.TopologyConstants;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -39,10 +41,10 @@ import java.util.Random;
 import java.util.UUID;
 
 /**
- * ****************************************
- * add : 2018-07-06
+ * Benchmark topology for formal experiment with 6 work nodes.
+ * 2018-07-06
  *
- * ****************************************
+ * @author yitian
  */
 public final class BenchmarkSentenceWordCountTopology {
     private BenchmarkSentenceWordCountTopology() {
@@ -62,25 +64,22 @@ public final class BenchmarkSentenceWordCountTopology {
         builder.setBolt("count", new WordCount(), 10).fieldsGrouping("split", new Fields("word"));
 
         Config conf = new Config();
-        // 2018-07-06 add for benchmark4**********************************************
         // maxspoutpending record: 1000->10000
-        conf.setMaxSpoutPending(1000); // modified for latency
-        conf.setMessageTimeoutSecs(60); // modified for latency
+        conf.setMaxSpoutPending(TopologyConstants.BENCHMARK_SPOUT_PENDING); // modified for latency
+        conf.setMessageTimeoutSecs(TopologyConstants.BENCHMARK_SPOUT_TIMEOUT); // modified for latency
         conf.setTopologyReliabilityMode(Config.TopologyReliabilityMode.ATLEAST_ONCE); // latency shows config
 //        conf.setContainerRamPadding(ByteAmount.fromGigabytes(1)); // for RR. default=2G
-        // ***************************************************************************
 
         // component resource configuration
-        conf.setComponentRam("spout", ByteAmount.fromMegabytes(512));
-        conf.setComponentRam("split", ByteAmount.fromMegabytes(512));
-        conf.setComponentRam("count", ByteAmount.fromMegabytes(512)); // default: 512mb
+        conf.setComponentRam("spout", ByteAmount.fromMegabytes(TopologyConstants.BENCHMARK_COMPONENT_RAM));
+        conf.setComponentRam("split", ByteAmount.fromMegabytes(TopologyConstants.BENCHMARK_COMPONENT_RAM));
+        conf.setComponentRam("count", ByteAmount.fromMegabytes(TopologyConstants.BENCHMARK_COMPONENT_RAM)); // default: 512mb
 
         // container resource configuration
-        conf.setContainerDiskRequested(ByteAmount.fromGigabytes(3)); // default: 3g
-        conf.setContainerRamRequested(ByteAmount.fromGigabytes(3)); // default: 3g
-        conf.setContainerCpuRequested(2); // default: 2
-
-        conf.setNumStmgrs(6);
+        conf.setContainerDiskRequested(ByteAmount.fromGigabytes(TopologyConstants.BENCHMARK_CONTAINER_DISK_REQUESTED)); // default: 3g
+        conf.setContainerRamRequested(ByteAmount.fromGigabytes(TopologyConstants.BENCHMARK_CONTAINER_RAM_REQUESTED)); // default: 3g
+        conf.setContainerCpuRequested(TopologyConstants.BENCHMARK_CONTAINER_CPU_REQUESTED); // default: 2
+        conf.setNumStmgrs(TopologyConstants.BENCHMARK_STMGR_NUM);
 
         HeronSubmitter.submitTopology(name, conf, builder.createTopology());
     }
@@ -282,36 +281,11 @@ public final class BenchmarkSentenceWordCountTopology {
         private OutputCollector collector;
         // ------------------------------------------
 
-//        @Override
-//        public void prepare(Map<String, Object> map, TopologyContext topologyContext) {
-//            // deployed load monitor -------------------------------------------------------
-//            WorkerMonitor.getInstance().setContextInfo(topologyContext);
-//            taskMonitor = new TaskMonitor(topologyContext.getThisTaskId());
-//            // -----------------------------------------------------------------------------
-//        }
-//
-//        @Override
-//        public void execute(Tuple tuple, BasicOutputCollector collector) {
-//            // deployed load monitor -------------------------------------------------------
-//            taskMonitor.notifyTupleReceived(tuple);
-//            // -----------------------------------------------------------------------------
-//
-//            String word = tuple.getString(0);
-//            Integer count = counts.get(word);
-//            if (count == null) {
-//                count = 0;
-//            }
-//            count++;
-//            counts.put(word, count);
-//            collector.emit(new Values(word, count));
-//        }
-
         @Override
         public void declareOutputFields(OutputFieldsDeclarer declarer) {
             declarer.declare(new Fields("word", "count"));
         }
 
-        // deployed latency monitor --------------------------------------------------------
         @Override
         public void prepare(Map<String, Object> map, TopologyContext topologyContext, OutputCollector outputCollector) {
             // deployed load monitor -------------------------------------------------------
@@ -341,6 +315,5 @@ public final class BenchmarkSentenceWordCountTopology {
             collector.ack(tuple);
             // ------------------------------------------
         }
-        // ---------------------------------------------------------------------------------
     }
 }
