@@ -31,6 +31,9 @@ import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
 
+/**
+ * Used in Example Topology that named ExclamationTopology
+ */
 public class TestWordSpout extends BaseRichSpout {
 
     private static final long serialVersionUID = -3217886193225455451L;
