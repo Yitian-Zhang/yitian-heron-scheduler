@@ -39,10 +39,13 @@ import java.util.Random;
 import java.util.UUID;
 
 /**
- * ****************************************
- * add at 2018-07-06: running for test cluster that has 4 nodes
- * 2018-10-03: update for BW algorithm
- * ****************************************
+ * Built for testing cluster that has 4 work nodes.
+ * Using in Load-aware online scheduling algorithm of Heron.
+ *
+ * Created at 2018-09-06
+ * Updated at 2018-10-03
+ *
+ * @author yitian
  */
 public final class ClusterSentenceWordCountTopology {
     private ClusterSentenceWordCountTopology() {
@@ -62,13 +65,11 @@ public final class ClusterSentenceWordCountTopology {
         builder.setBolt("count", new WordCount(), 1).fieldsGrouping("split", new Fields("word"));
 
         Config conf = new Config();
-        // 2018-07-06 add for benchmark4**********************************************
         // maxspoutpending record: 1000->10000
         conf.setMaxSpoutPending(10000); // modified for latency
         conf.setMessageTimeoutSecs(600); // modified for latency
         conf.setTopologyReliabilityMode(Config.TopologyReliabilityMode.ATLEAST_ONCE); // latency shows config
 //        conf.setContainerRamPadding(ByteAmount.fromGigabytes(1)); // for RR. default=2G
-        // ***************************************************************************
 
         // component resource configuration
         conf.setComponentRam("spout", ByteAmount.fromMegabytes(512));
@@ -222,10 +223,8 @@ public final class ClusterSentenceWordCountTopology {
     }
 
     /**
-     * ****************************************
+     * Stay extends BaseBasicBolt un-changed
      * 2018-05-26
-     * stay extends BaseBasicBolt un-changed
-     * ****************************************
      */
     public static class SplitSentence extends BaseBasicBolt {
         private static final long serialVersionUID = 1249629174039601217L;
@@ -260,10 +259,8 @@ public final class ClusterSentenceWordCountTopology {
     }
 
     /**
-     * ************************************
-     * 2018-05-26 udpate
-     * modified BaseBasicBlot to BaseRichBolt to deployed latency monitor
-     * ************************************
+     * Modified BaseBasicBlot to BaseRichBolt to deployed latency monitor
+     * 2018-05-26 updated
      */
     public static class WordCount extends BaseRichBolt {
         private static final long serialVersionUID = -8492566595062774310L;
@@ -277,36 +274,11 @@ public final class ClusterSentenceWordCountTopology {
         private OutputCollector collector;
         // ------------------------------------------
 
-//        @Override
-//        public void prepare(Map<String, Object> map, TopologyContext topologyContext) {
-//            // deployed load monitor -------------------------------------------------------
-//            WorkerMonitor.getInstance().setContextInfo(topologyContext);
-//            taskMonitor = new TaskMonitor(topologyContext.getThisTaskId());
-//            // -----------------------------------------------------------------------------
-//        }
-//
-//        @Override
-//        public void execute(Tuple tuple, BasicOutputCollector collector) {
-//            // deployed load monitor -------------------------------------------------------
-//            taskMonitor.notifyTupleReceived(tuple);
-//            // -----------------------------------------------------------------------------
-//
-//            String word = tuple.getString(0);
-//            Integer count = counts.get(word);
-//            if (count == null) {
-//                count = 0;
-//            }
-//            count++;
-//            counts.put(word, count);
-//            collector.emit(new Values(word, count));
-//        }
-
         @Override
         public void declareOutputFields(OutputFieldsDeclarer declarer) {
             declarer.declare(new Fields("word", "count"));
         }
 
-        // deployed latency monitor --------------------------------------------------------
         @Override
         public void prepare(Map<String, Object> map, TopologyContext topologyContext, OutputCollector outputCollector) {
             // deployed load monitor -------------------------------------------------------
@@ -336,6 +308,5 @@ public final class ClusterSentenceWordCountTopology {
             collector.ack(tuple);
             // ------------------------------------------
         }
-        // ---------------------------------------------------------------------------------
     }
 }
