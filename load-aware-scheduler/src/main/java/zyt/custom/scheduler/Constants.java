@@ -55,6 +55,11 @@ public class Constants {
      */
     public static final Integer TIME_WINDOW_LENGTH = 10;
 
+    /**
+     * AuroraSchedulerController log file
+     */
+    public static final String SCHEDULER_LOG_FILE = "/home/yitian/logs/aurora-scheduler/aurora-scheduler.txt";
+
     // original constants
     /*
     public static final int ACKER_TAKS_ID = 1;

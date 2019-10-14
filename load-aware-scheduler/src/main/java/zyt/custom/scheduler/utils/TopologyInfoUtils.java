@@ -14,6 +14,9 @@ import zyt.custom.utils.Utils;
 
 import java.util.*;
 
+/**
+ * @author yitian
+ */
 public class TopologyInfoUtils {
 
     /*-------------------Get Topology Basic Info--------------------*/
@@ -24,8 +27,8 @@ public class TopologyInfoUtils {
      * @return PhysicalPlans.PhysicalPlan
      */
     public static PhysicalPlans.PhysicalPlan getPhysicalPlanInfo(PhysicalPlans.PhysicalPlan physicalPlan, String filename) {
-        FileUtils.writeToFile(filename, "[FUNCTION]----------------GET PHYSICAL PLAN START----------------");
-        FileUtils.writeToFile(filename, "Getting hosts list of word nodes from physical plan...");
+        FileUtils.writeToFile(filename, "----------------GET PHYSICAL PLAN START----------------");
+        FileUtils.writeToFile(filename, "Getting hosts list of word nodes from physical plan: ");
         List<String> hostList = new ArrayList<>(); // hostname list in this topology
         for (PhysicalPlans.StMgr stMgr : physicalPlan.getStmgrsList()) { // get hostanem from Stmgr class
             String hostname = stMgr.getHostName();
@@ -33,10 +36,10 @@ public class TopologyInfoUtils {
                 hostList.add(hostname);
             }
         }
-        FileUtils.writeToFile(filename, "Hostlist: " + Utils.collectionToString(hostList));
+        FileUtils.writeToFile(filename, "Host list is: " + Utils.collectionToString(hostList));
 
         // hostname -> list of stmgrid
-        FileUtils.writeToFile(filename, "Getting host -> stmgr list from physical plan...");
+        FileUtils.writeToFile(filename, "Getting host -> stmgr list from physical plan: ");
         Map<String, List<String>> stmgrToHostMap = new HashMap<>();
         for (String hostname : hostList) {
             List<String> stmgrList = null;
@@ -50,10 +53,11 @@ public class TopologyInfoUtils {
                 }
             }
             stmgrToHostMap.put(hostname, stmgrList);
-            FileUtils.writeToFile(filename, "Hostname: " + hostname + " stmgr list: " + Utils.collectionToString(stmgrToHostMap.get(hostname)));
+            FileUtils.writeToFile(filename, "Hostname: " + hostname +
+                    " stmgr list: " + Utils.collectionToString(stmgrToHostMap.get(hostname)));
         }
 
-        FileUtils.writeToFile(filename, "Getting stmgr -> task list from physical plan...");
+        FileUtils.writeToFile(filename, "Getting stmgr -> task list from physical plan: ");
         Map<String, List<Integer>> taskToContainerMap = new HashMap<>();
         for (PhysicalPlans.StMgr stMgr : physicalPlan.getStmgrsList()) {
             List<Integer> taskList = null;
@@ -67,10 +71,11 @@ public class TopologyInfoUtils {
                 }
             }
             taskToContainerMap.put(stMgr.getId(), taskList);
-            FileUtils.writeToFile(filename, "Stmgr id: " + stMgr.getId() + " instance list is: " + taskToContainerMap.get(stMgr.getId()));
+            FileUtils.writeToFile(filename, "Stmgr id: " + stMgr.getId() +
+                    " instance list is: " + taskToContainerMap.get(stMgr.getId()));
         }
 
-        FileUtils.writeToFile(filename, "[FUNCTION]----------------GET PHYSICAL PLAN END----------------");
+        FileUtils.writeToFile(filename, "----------------GET PHYSICAL PLAN END----------------");
         return physicalPlan;
     }
 
@@ -114,7 +119,7 @@ public class TopologyInfoUtils {
      * @param filename file to print
      */
     private void printTopologyInfoDetial(Config runtime, String filename) {
-        // modified 2018-05-11 to show stream info in topology
+        // modified to show stream info in topology at 2018-05-11
         FileUtils.writeToFile(filename, "-------------------------TOPOLOGY INFO START-------------------------");
         // 输出Topology信息
         TopologyAPI.Topology topology = Runtime.topology(runtime);
@@ -164,21 +169,28 @@ public class TopologyInfoUtils {
      * @param filename file to print
      */
     public static void printPackingInfo(PackingPlan packingPlan, String filename) {
-        FileUtils.writeToFile(filename, "[FUNCTION]---------------PACKING PLAN INFO START---------------");
+        FileUtils.writeToFile(filename, "---------------PACKING PLAN INFO START---------------");
         FileUtils.writeToFile(filename, "PackingPlan info: " + packingPlan);
         Map<Integer, PackingPlan.ContainerPlan> containersMap = packingPlan.getContainersMap();
         for (Integer integer : containersMap.keySet()) {
             PackingPlan.ContainerPlan containerPlan = containersMap.get(integer);
-            FileUtils.writeToFile(filename, "ContainerPlan info: " + containerPlan); // print current containerPlan
+            // print current containerPlan
+            FileUtils.writeToFile(filename, "ContainerPlan info: " + containerPlan);
             Set<PackingPlan.InstancePlan> instancePlanSet = containerPlan.getInstances();
             for (PackingPlan.InstancePlan instancePlan : instancePlanSet) {
-                FileUtils.writeToFile(filename, "InstancePlan info: " + instancePlan); // 使用tostring方法输出instancePlan
+                FileUtils.writeToFile(filename, "InstancePlan info: " + instancePlan);
             }
         }
-        FileUtils.writeToFile(filename, "[FUNCTION]---------------PACKING PLAN INFO END---------------");
+        FileUtils.writeToFile(filename, "---------------PACKING PLAN INFO END---------------");
     }
 
-
-
+    /**
+     * Get the topology from the runtime.
+     * @param runtime runtime config
+     * @return topology
+     */
+    public static TopologyAPI.Topology getTopology(Config runtime) {
+        return Runtime.topology(runtime);
+    }
 
 }

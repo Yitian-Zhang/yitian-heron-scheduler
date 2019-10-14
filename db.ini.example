@@ -1,0 +1,4 @@
+node-name=heron01
+capacity=40
+time.window.count=3
+time.window.length=5

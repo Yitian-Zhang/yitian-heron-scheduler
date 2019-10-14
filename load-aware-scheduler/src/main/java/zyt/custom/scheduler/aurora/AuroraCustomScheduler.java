@@ -42,7 +42,6 @@ import java.util.logging.Logger;
 /**
  * AuroraCustomScheduler
  *
- *
  * 20180718 for rescheduler-core ---------------------
  * The content in this, which is the custom code for
  * custom scheduler.
@@ -85,7 +84,6 @@ public class AuroraCustomScheduler implements IScheduler, IScalable {
 
         // 0718 for rescheduler-core --------------------------------------
         this.topology = Runtime.topology(this.runtime);
-        // cluster mode -> local mode for config
         this.schedulerController = new AuroraSchedulerController(Config.toLocalMode(this.config), this.runtime);
         // ----------------------------------------------------------------
     }
