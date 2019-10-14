@@ -1,5 +1,7 @@
 package zyt.custom.scheduler;
 
+import com.twitter.heron.common.basics.ByteAmount;
+
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 
@@ -59,6 +61,16 @@ public class Constants {
      * AuroraSchedulerController log file
      */
     public static final String SCHEDULER_LOG_FILE = "/home/yitian/logs/aurora-scheduler/aurora-scheduler.txt";
+
+    /**
+     *
+     */
+    public static final ByteAmount MIN_RAM_PER_INSTANCE = ByteAmount.fromMegabytes(192); // MIN_RAM_PER_INSTANCE = 192m
+
+    /**
+     *
+     */
+    public static final ByteAmount DEFAULT_RAM_PADDING_PER_CONTAINER = ByteAmount.fromGigabytes(2); // 默认的每个container的padding ram值为2
 
     // original constants
     /*
