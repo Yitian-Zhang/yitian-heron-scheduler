@@ -7,7 +7,7 @@ import zyt.custom.scheduler.component.Executor;
 import zyt.custom.scheduler.component.ExecutorPair;
 import zyt.custom.scheduler.component.Node;
 import zyt.custom.scheduler.component.Instance;
-import zyt.custom.tools.Utils;
+import zyt.custom.utils.Utils;
 
 import javax.sql.DataSource;
 import java.io.FileInputStream;
@@ -15,8 +15,6 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**

@@ -16,7 +16,7 @@
  * limitations under the License
  */
 
-package zyt.custom.tools;
+package zyt.custom.utils;
 
 
 import java.io.Serializable;

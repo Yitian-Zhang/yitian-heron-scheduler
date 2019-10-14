@@ -23,9 +23,10 @@ import com.twitter.heron.spi.statemgr.SchedulerStateManagerAdaptor;
 import com.twitter.heron.spi.utils.ReflectionUtils;
 import zyt.custom.scheduler.DataManager;
 import zyt.custom.scheduler.component.ExecutorPair;
-import zyt.custom.tools.FileUtils;
-import zyt.custom.tools.Utils;
-import zyt.custom.tools.UtilFunctions;
+import zyt.custom.scheduler.utils.SchedulerUtils;
+import zyt.custom.scheduler.utils.TopologyInfoUtils;
+import zyt.custom.utils.FileUtils;
+import zyt.custom.utils.Utils;
 
 import java.sql.SQLException;
 import java.util.*;
@@ -103,11 +104,11 @@ public class AuroraSchedulerController {
             // physcial plan
             FileUtils.writeToFile(filename, "Before trigger scheduler, the physical plan is:");
             PhysicalPlans.PhysicalPlan physicalPlan = stateManagerAdaptor.getPhysicalPlan(topologyName);
-            getPhysicalPlanInfo(physicalPlan);
+            TopologyInfoUtils.getPhysicalPlanInfo(physicalPlan, filename);
 
             // packing plan
             FileUtils.writeToFile(filename, "Before trigger scheduler, the packing plan is:");
-            outputPackingInfoToScheduleLog(packingPlan);
+            TopologyInfoUtils.printPackingInfo(packingPlan, filename);
 
             // **************************NEED TO CUSTOM ALGORITHM START***************************
             // config and runtime
@@ -124,7 +125,7 @@ public class AuroraSchedulerController {
             FileUtils.writeToFile(filename, "Create the new PackingPlan using New Packing Algorithm...");
             PackingPlan newPackingPlan = LauncherUtils.getInstance().createPackingPlan(config, runtime);
             FileUtils.writeToFile(filename, "Then, new packing plan info...");
-            outputPackingInfoToScheduleLog(newPackingPlan);
+            TopologyInfoUtils.printPackingInfo(newPackingPlan, filename);
 
             // serializer packing plan for creating updateTopologyRequest
             FileUtils.writeToFile(filename, "Now, Update topology using updateTopologyManager...");
@@ -143,7 +144,7 @@ public class AuroraSchedulerController {
                     .build();
 
             // Create a ISchedulerClient basing on the config
-            ISchedulerClient schedulerClient = getSchedulerClient(newRuntime);
+            ISchedulerClient schedulerClient = SchedulerUtils.getSchedulerClient(newRuntime, config);
 
             // build updatetopologyrequest object to update topogolgy
             Scheduler.UpdateTopologyRequest updateTopologyRequest =
@@ -163,7 +164,7 @@ public class AuroraSchedulerController {
             // Clean the connection when we are done.
             FileUtils.writeToFile(filename, "Schedule update topology successfully!!!");
             FileUtils.writeToFile(filename, "After trigger scheduler, the physical plan is:");
-            getPhysicalPlanInfo(stateManagerAdaptor.getPhysicalPlan(topologyName));
+            TopologyInfoUtils.getPhysicalPlanInfo(stateManagerAdaptor.getPhysicalPlan(topologyName), filename);
 
             FileUtils.writeToFile(filename, "-----------------TRIGGER RESCHEDULER END-----------------");
         } finally {
@@ -198,11 +199,11 @@ public class AuroraSchedulerController {
             // physcial plan
             LOG.info("Before trigger scheduler, the physical plan is:");
             PhysicalPlans.PhysicalPlan physicalPlan = stateManagerAdaptor.getPhysicalPlan(topologyName);
-            getPhysicalPlanInfo(physicalPlan);
+            TopologyInfoUtils.getPhysicalPlanInfo(physicalPlan, filename);
 
             // packing plan
             LOG.info("Before trigger scheduler, the packing plan is:");
-            outputPackingInfoToScheduleLog(packingPlan);
+            TopologyInfoUtils.printPackingInfo(packingPlan, filename);
 
             // **************************NEED TO CUSTOM ALGORITHM START***************************
             // 201-07-18 add
@@ -707,7 +708,7 @@ public class AuroraSchedulerController {
             validatePackingPlan(hotPackingPlan);
 
             LOG.info("Now, Created hotPackingPlan successed, hot packing plan info is: ");
-            outputPackingInfoToScheduleLog(hotPackingPlan);
+            TopologyInfoUtils.printPackingInfo(hotPackingPlan, filename);
 
             LOG.info("Now, Update topology with new packing by updateTopologyManager...");
             PackingPlans.PackingPlan currentPackingPlan = stateManagerAdaptor.getPackingPlan(topologyName);
@@ -721,7 +722,7 @@ public class AuroraSchedulerController {
                     .build();
 
             // Create a ISchedulerClient basing on the config
-            ISchedulerClient schedulerClient = getSchedulerClient(newRuntime);
+            ISchedulerClient schedulerClient = SchedulerUtils.getSchedulerClient(newRuntime, config);
 
             // build updatetopologyrequest object to update topogolgy
             Scheduler.UpdateTopologyRequest updateTopologyRequest =
@@ -741,7 +742,7 @@ public class AuroraSchedulerController {
             // Clean the connection when we are done.
             LOG.info("Schedule update topology successfully!!!");
             LOG.info("After trigger scheduler, the physical plan is:");
-            getPhysicalPlanInfo(stateManagerAdaptor.getPhysicalPlan(topologyName));
+            TopologyInfoUtils.getPhysicalPlanInfo(stateManagerAdaptor.getPhysicalPlan(topologyName), filename);
 
             LOG.info("-----------------HOTEDGE RESCHEDULER END-----------------");
         } finally {
@@ -778,10 +779,10 @@ public class AuroraSchedulerController {
             // physcial plan
             LOG.info("[CORE] - Current physical plan is:");
             PhysicalPlans.PhysicalPlan physicalPlan = stateManagerAdaptor.getPhysicalPlan(this.topologyName);
-            getPhysicalPlanInfo(physicalPlan);
+            TopologyInfoUtils.getPhysicalPlanInfo(physicalPlan, filename);
             // packing plan
             LOG.info("[CORE] - Current packing plan is:");
-            outputPackingInfoToScheduleLog(packingPlan);
+            TopologyInfoUtils.printPackingInfo(packingPlan, filename);
 
             // **************************NEED TO CUSTOM ALGORITHM START***************************
             LOG.info("*****************CREATE NEW PACKINGPLAN USING CUSTOM ALGORITHM*****************");
@@ -1040,7 +1041,7 @@ public class AuroraSchedulerController {
                     .build();
 
             // Create a ISchedulerClient basing on the config
-            ISchedulerClient schedulerClient = getSchedulerClient(newRuntime);
+            ISchedulerClient schedulerClient = SchedulerUtils.getSchedulerClient(newRuntime, config);
 
             // build updatetopologyrequest object to update topogolgy
             Scheduler.UpdateTopologyRequest updateTopologyRequest =
@@ -1060,7 +1061,7 @@ public class AuroraSchedulerController {
             // Clean the connection when we are done.
             LOG.info("[CORE] - =========================UPDATE TOPOLOGY SUCCESSFULLY=========================");
             LOG.info("[CORE] - After trigger scheduler, the physical plan is:");
-            getPhysicalPlanInfo(stateManagerAdaptor.getPhysicalPlan(topologyName));
+            TopologyInfoUtils.getPhysicalPlanInfo(stateManagerAdaptor.getPhysicalPlan(topologyName), filename);
 
             LOG.info("-----------------BASED WEIGHT RESCHEDULING ALGORITHM END-----------------");
         } finally {
@@ -1100,11 +1101,11 @@ public class AuroraSchedulerController {
             // this collected
             PackingPlans.PackingPlan protoPackingPlan = stateManagerAdaptor.getPackingPlan(topologyName);
             PackingPlan deserializedPackingPlan = deserializer.fromProto(protoPackingPlan);
-            outputPackingInfoToScheduleLog(deserializedPackingPlan);
+            TopologyInfoUtils.printPackingInfo(deserializedPackingPlan, filename);
 
             // something wrong
             PhysicalPlans.PhysicalPlan physicalPlan = stateManagerAdaptor.getPhysicalPlan(this.topologyName);
-            getPhysicalPlanInfo(physicalPlan);
+            TopologyInfoUtils.getPhysicalPlanInfo(physicalPlan, filename);
 
 
             LOG.info("=======================THIS IS TEST SCHEDULE END=======================");
@@ -1218,7 +1219,7 @@ public class AuroraSchedulerController {
         List<ExecutorPair> connectedPair = new ArrayList<>();
         List<ExecutorPair> connectedPairInCurrentStmgr = new ArrayList<>();
         // ###20181108 add
-        List<Integer> stmgrTaskListTemp = UtilFunctions.deepCopyIntegerArrayList(stmgrTaskList);
+        List<Integer> stmgrTaskListTemp = Utils.deepCopyIntegerArrayList(stmgrTaskList);
 
         // seaching connected task of the taskId
         for (ExecutorPair pair : pairList) { // foreach all instance pair
@@ -1368,7 +1369,7 @@ public class AuroraSchedulerController {
     /*******************************************************************************/
 
 
-    /*********************************RESCOURCE ABOUT START*********************************/
+    /*********************************RESOURCE ABOUT START*********************************/
 //    private ByteAmount getContainerRamPadding(List<TopologyAPI.Config.KeyValue> topologyConfig) {
 //        return TopologyUtils.getConfigWithDefault(topologyConfig, com.twitter.heron.api.Config.TOPOLOGY_CONTAINER_RAM_PADDING, DEFAULT_RAM_PADDING_PER_CONTAINER);
 //    }
@@ -1401,7 +1402,7 @@ public class AuroraSchedulerController {
 
     /**
      * ****************************************
-     * add: 2081-05-21 from packing algorithem
+     * add: 2081-05-21 from packing algorithm
      * ****************************************
      * Check whether the PackingPlan generated is valid
      * 这里只是对最后生成的InstanceRam资源是否小于MIN_RAM_PER_INSTANCE进行判断
@@ -1838,227 +1839,4 @@ public class AuroraSchedulerController {
     //                  Hot Edge Reschedule Tools function End
     /****************************************************************************/
 
-
-    /****************************************************************************/
-    //                       Start ReScheduler Tools Functions
-    /****************************************************************************/
-
-    /**
-     * Get current physical plan info to reschedule topology
-     * add: 2018-05-19
-     *
-     * @return
-     */
-    public PhysicalPlans.PhysicalPlan getPhysicalPlanInfo(PhysicalPlans.PhysicalPlan physicalPlan) {
-        FileUtils.writeToFile(filename, "[FUNCTION]----------------GET PHYSICAL PLAN START----------------");
-        FileUtils.writeToFile(filename, "Getting hosts list of word nodes from physical plan...");
-        List<String> hostList = new ArrayList<>(); // hostname list in this topology
-        for (PhysicalPlans.StMgr stMgr : physicalPlan.getStmgrsList()) { // get hostanem from Stmgr class
-            String hostname = stMgr.getHostName();
-            if (!hostList.contains(hostname)) {
-                hostList.add(hostname);
-            }
-        }
-        FileUtils.writeToFile(filename, "Hostlist: " + Utils.collectionToString(hostList));
-
-        // hostname -> list of stmgrid
-        FileUtils.writeToFile(filename, "Getting host -> stmgr list from physical plan...");
-        Map<String, List<String>> stmgrToHostMap = new HashMap<>();
-        for (String hostname : hostList) {
-            List<String> stmgrList = null;
-            if (stmgrToHostMap.get(hostname) == null) {
-                stmgrList = new ArrayList<>();
-                stmgrToHostMap.put(hostname, stmgrList);
-            }
-            for (PhysicalPlans.StMgr stMgr : physicalPlan.getStmgrsList()) {
-                if (stMgr.getHostName().equals(hostname)) {
-                    stmgrList.add(stMgr.getId());
-                }
-            }
-            stmgrToHostMap.put(hostname, stmgrList);
-            FileUtils.writeToFile(filename, "Hostname: " + hostname + " stmgr list: " + Utils.collectionToString(stmgrToHostMap.get(hostname)));
-        }
-
-        FileUtils.writeToFile(filename, "Getting stmgr -> task list from physical plan...");
-        Map<String, List<Integer>> taskToContainerMap = new HashMap<>();
-        for (PhysicalPlans.StMgr stMgr : physicalPlan.getStmgrsList()) {
-            List<Integer> taskList = null;
-            if (taskToContainerMap.get(stMgr.getId()) == null) {
-                taskList = new ArrayList<>();
-                taskToContainerMap.put(stMgr.getId(), taskList);
-            }
-            for (PhysicalPlans.Instance instance : physicalPlan.getInstancesList()) {
-                if (instance.getStmgrId().equals(stMgr.getId())) {
-                    taskList.add(instance.getInfo().getTaskId());
-                }
-            }
-            taskToContainerMap.put(stMgr.getId(), taskList);
-            FileUtils.writeToFile(filename, "Stmgr id: " + stMgr.getId() + " instance list is: " + taskToContainerMap.get(stMgr.getId()));
-        }
-
-        FileUtils.writeToFile(filename, "[FUNCTION]----------------GET PHYSICAL PLAN END----------------");
-        return physicalPlan;
-    }
-
-    /**
-     * Output config and runtime info to log file
-     *
-     * @param config
-     * @param runtime
-     */
-    private void outputConfigInfo(Config config, Config runtime) {
-        FileUtils.writeToFile(filename, "--------------------CONFIG INFO START----------------------");
-        FileUtils.writeToFile(filename, config.toString());
-        FileUtils.writeToFile(filename, "--------------------RUNTIME INFO START---------------------");
-        FileUtils.writeToFile(filename, runtime.toString());
-        FileUtils.writeToFile(filename, "--------------------CONFIG AND RUNTIME INFO END--------------------------");
-    }
-
-    private void outputRuntimeInfo(Config config) {
-        FileUtils.writeToFile(filename, "--------------------RUNTIME INFO START----------------------");
-        FileUtils.writeToFile(filename, config.toString());
-        FileUtils.writeToFile(filename, "--------------------RUNTIME INFO END--------------------------");
-    }
-
-    /**
-     * @param packingPlan
-     */
-    private void outputPackingInfoToScheduleLog(PackingPlan packingPlan) {
-        FileUtils.writeToFile(filename, "[FUNCTION]---------------PACKING PLAN INFO START---------------");
-        FileUtils.writeToFile(filename, "PackingPlan info: " + packingPlan);
-        Map<Integer, PackingPlan.ContainerPlan> containersMap = packingPlan.getContainersMap();
-        for (Integer integer : containersMap.keySet()) {
-            PackingPlan.ContainerPlan containerPlan = containersMap.get(integer);
-            FileUtils.writeToFile(filename, "ContainerPlan info: " + containerPlan); // print current containerPlan
-            Set<PackingPlan.InstancePlan> instancePlanSet = containerPlan.getInstances();
-            for (PackingPlan.InstancePlan instancePlan : instancePlanSet) {
-                FileUtils.writeToFile(filename, "InstancePlan info: " + instancePlan); // 使用tostring方法输出instancePlan
-            }
-        }
-        FileUtils.writeToFile(filename, "[FUNCTION]---------------PACKING PLAN INFO END---------------");
-    }
-
-    /**
-     *
-     */
-    private void getTopologyInfo() {
-        // modified 2018-05-11 to show stream info in topology
-        FileUtils.writeToFile(filename, "-------------------------TOPOLOGY INFO START-------------------------");
-        // 输出Topology信息
-        TopologyAPI.Topology topology = Runtime.topology(runtime);
-        FileUtils.writeToFile(filename, "Topology id: " + topology.getId() + " name: " + topology.getName());
-        FileUtils.writeToFile(filename, "Spout info...");
-        List<TopologyAPI.Spout> spouts = topology.getSpoutsList();
-        for (TopologyAPI.Spout spout : spouts) {
-            FileUtils.writeToFile(filename, "Spout comp name: " + spout.getComp().getName());
-            FileUtils.writeToFile(filename, "Spout outputs count: " + spout.getOutputsCount());
-            FileUtils.writeToFile(filename, "Get spout output list...");
-            List<TopologyAPI.OutputStream> outputStreams = spout.getOutputsList();
-            for (TopologyAPI.OutputStream outputStream : outputStreams) {
-                TopologyAPI.StreamId streamId = outputStream.getStream();
-                FileUtils.writeToFile(filename, "Spout output stream: " + streamId);
-                FileUtils.writeToFile(filename, "Spout Output Stream id: " + streamId.getId());
-                FileUtils.writeToFile(filename, "This Stream's component name: " + streamId.getComponentName());
-            }
-        }
-        FileUtils.writeToFile(filename, "Bolt info...");
-        List<TopologyAPI.Bolt> bolts = topology.getBoltsList();
-        for (TopologyAPI.Bolt bolt : bolts) {
-            FileUtils.writeToFile(filename, "Bolt comp name: " + bolt.getComp().getName());
-            FileUtils.writeToFile(filename, "Bolt inputs count: " + bolt.getInputsCount());
-            FileUtils.writeToFile(filename, "Get bolt input list...");
-            List<TopologyAPI.InputStream> inputStreams = bolt.getInputsList();
-            for (TopologyAPI.InputStream inputStream : inputStreams) {
-                FileUtils.writeToFile(filename, "Bolt input stream: " + inputStream);
-                FileUtils.writeToFile(filename, "Bolt input stream id: " + inputStream.getStream().getId());
-                FileUtils.writeToFile(filename, "This Stream's component name: " + inputStream.getStream().getComponentName());
-            }
-            FileUtils.writeToFile(filename, "Get bolt output list...");
-            List<TopologyAPI.OutputStream> outputStreams = bolt.getOutputsList();
-            for (TopologyAPI.OutputStream outputStream : outputStreams) {
-                TopologyAPI.StreamId streamId = outputStream.getStream();
-                FileUtils.writeToFile(filename, "Bolt output stream: " + streamId);
-                FileUtils.writeToFile(filename, "Bolt Output Stream id: " + streamId.getId());
-                FileUtils.writeToFile(filename, "This Stream's component name: " + streamId.getComponentName());
-            }
-        }
-        FileUtils.writeToFile(filename, "-------------------------TOPOLOGY INFO END-------------------------");
-    }
-
-    private void outputTopologyInfo(TopologyAPI.Topology topology) {
-        FileUtils.writeToFile(filename, "------------------------TOPOLOGY INFO START------------------------");
-        FileUtils.writeToFile(filename, "Topology info is:" + topology.toString());
-        FileUtils.writeToFile(filename, "------------------------TOPOLOGY INFO END------------------------");
-    }
-
-    /**
-     * 20180705 copy from LaunchRunner.java
-     * Trim the topology definition for storing into state manager.
-     * This is because the user generated spouts and bolts
-     * might be huge.
-     *
-     * @return trimmed topology
-     */
-    public TopologyAPI.Topology trimTopology(TopologyAPI.Topology topology) {
-        // create a copy of the topology physical plan
-        TopologyAPI.Topology.Builder builder = TopologyAPI.Topology.newBuilder().mergeFrom(topology);
-        // clear the state of user spout java objects - which can be potentially huge
-        for (TopologyAPI.Spout.Builder spout : builder.getSpoutsBuilderList()) {
-            spout.getCompBuilder().clearSerializedObject();
-        }
-        // clear the state of user spout java objects - which can be potentially huge
-        for (TopologyAPI.Bolt.Builder bolt : builder.getBoltsBuilderList()) {
-            bolt.getCompBuilder().clearSerializedObject();
-        }
-        return builder.build();
-    }
-
-    /**
-     * @param runtime
-     * @return
-     * @throws SchedulerException
-     */
-    protected ISchedulerClient getSchedulerClient(Config runtime)
-            throws SchedulerException {
-        return new SchedulerClientFactory(config, runtime).getSchedulerClient();
-    }
-
-
-    protected void validateRuntimeManage(
-            SchedulerStateManagerAdaptor adaptor,
-            String topologyName) throws TopologyRuntimeManagementException {
-        // Check whether the WordCountTopology has already been running
-        Boolean isTopologyRunning = adaptor.isTopologyRunning(topologyName);
-
-        if (isTopologyRunning == null || isTopologyRunning.equals(Boolean.FALSE)) {
-            throw new TopologyRuntimeManagementException(
-                    String.format("Topology '%s' does not exist", topologyName));
-        }
-
-        // Check whether cluster/role/environ matched
-        ExecutionEnvironment.ExecutionState executionState = adaptor.getExecutionState(topologyName);
-        if (executionState == null) {
-            throw new TopologyRuntimeManagementException(
-                    String.format("Failed to get execution state for WordCountTopology %s", topologyName));
-        }
-
-        String stateCluster = executionState.getCluster();
-        String stateRole = executionState.getRole();
-        String stateEnv = executionState.getEnviron();
-        String configCluster = Context.cluster(config);
-        String configRole = Context.role(config);
-        String configEnv = Context.environ(config);
-        if (!stateCluster.equals(configCluster)
-                || !stateRole.equals(configRole)
-                || !stateEnv.equals(configEnv)) {
-            String currentState = String.format("%s/%s/%s", stateCluster, stateRole, stateEnv);
-            String configState = String.format("%s/%s/%s", configCluster, configRole, configEnv);
-            throw new TopologyRuntimeManagementException(String.format(
-                    "cluster/role/environ does not match. Topology '%s' is running at %s, not %s",
-                    topologyName, currentState, configState));
-        }
-    }
-    /****************************************************************************/
-    //                        End ReScheduler Tools Functions
-    /****************************************************************************/
 }
