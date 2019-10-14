@@ -1,5 +1,6 @@
 package zyt.custom.scheduler.aurora;
 
+import com.sun.tools.internal.jxc.ap.Const;
 import com.twitter.heron.api.generated.TopologyAPI;
 import com.twitter.heron.api.utils.TopologyUtils;
 import com.twitter.heron.common.basics.ByteAmount;
@@ -21,13 +22,20 @@ import com.twitter.heron.spi.scheduler.SchedulerException;
 import com.twitter.heron.spi.statemgr.IStateManager;
 import com.twitter.heron.spi.statemgr.SchedulerStateManagerAdaptor;
 import com.twitter.heron.spi.utils.ReflectionUtils;
+import zyt.custom.scheduler.Constants;
 import zyt.custom.scheduler.DataManager;
+import zyt.custom.scheduler.aurora.algorithm.ExampleRescheduler;
 import zyt.custom.scheduler.component.ExecutorPair;
+import zyt.custom.scheduler.rescheduler.AuroraRescheduler;
+import zyt.custom.scheduler.rescheduler.ReschedulerController;
 import zyt.custom.scheduler.utils.SchedulerUtils;
 import zyt.custom.scheduler.utils.TopologyInfoUtils;
 import zyt.custom.utils.FileUtils;
 import zyt.custom.utils.Utils;
+import zyt.custom.utils.YamlUtils;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.logging.Logger;
@@ -46,8 +54,10 @@ import java.util.logging.Logger;
  *
  * TODO: reconstructe this class
  */
-public class AuroraSchedulerController {
+public class AuroraSchedulerController extends ReschedulerController {
+
     private static final Logger LOG = Logger.getLogger(AuroraSchedulerController.class.getName());
+
     // 2018-07-18 add for hotedge ------------------------------------
     private static final ByteAmount DEFAULT_RAM_PADDING_PER_CONTAINER = ByteAmount.fromGigabytes(2); // 默认的每个container的padding ram值为2
     private static final ByteAmount MIN_RAM_PER_INSTANCE = ByteAmount.fromMegabytes(192); // MIN_RAM_PER_INSTANCE = 192m
@@ -58,13 +68,20 @@ public class AuroraSchedulerController {
     //    private static SchedulerStateManagerAdaptor stateManagerAdaptor;
     private Config config;
     private Config runtime;
-    private String filename = "/home/yitian/logs/aurora-scheduler/aurora-scheduler.txt";
+    private String filename = Constants.SCHEDULER_LOG_FILE;
     private PackingPlanProtoSerializer serializer;
     private PackingPlanProtoDeserializer deserializer;
     private ByteAmount containerRamPadding = DEFAULT_RAM_PADDING_PER_CONTAINER;
     // ---------------------------------------------------------------
 
+    private AuroraRescheduler auroraRescheduler;
+
+    public AuroraSchedulerController() {
+
+    }
+
     public AuroraSchedulerController(Config config, Config runtime) {
+        // TODO: these value can be instanced in Rescheduller.
         this.config = config;
         this.runtime = runtime;
         this.topology = Runtime.topology(this.runtime);
@@ -75,102 +92,40 @@ public class AuroraSchedulerController {
         // 2018-07-18 add for hot edge ----------------------------------------
 //        containerRamPadding = getContainerRamPadding(topology.getTopologyConfig().getKvsList());
         // --------------------------------------------------------------------
+
+        // TODO: restructure modified 5
+        this.auroraRescheduler = (AuroraRescheduler) loadRescheduler();
     }
 
     /**
-     * trigger schedule function
-     *
-     * @param packingPlan current packing plan
+     * Using Bridge Pattern to invoke the rescheduling algorithm.
+     * TODO: restructure modified 3
      */
-    public void triggerSchedule(PackingPlan packingPlan) {
-        FileUtils.writeToFile(filename, "-----------------TRIGGER RESCHEDULER START-----------------");
-        String stateMgrClass = Context.stateManagerClass(this.config); // get state manager instance
-        IStateManager stateMgr = null;
-        AuroraCustomScheduler customScheduler = null;
+    @Override
+    public void rescheduling(PackingPlan packingPlan) {
+        auroraRescheduler.reschedule(packingPlan);
+    }
 
+    /**
+     * TODO: restructure modified 4
+     * @return
+     */
+    public Object loadRescheduler() {
+        String className = (String) YamlUtils.getInstance().getValueByKey("rescheduling", "algorithm0");
+        Class clazz = null;
         try {
-            stateMgr = ReflectionUtils.newInstance(stateMgrClass);
-            FileUtils.writeToFile(filename, "Create IStateManager object success...");
-        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
+            // create instance of AuroraRescheduler
+            clazz = Class.forName(className);
+            Object obj = clazz.newInstance();
+
+            // invoke the initialize function
+            Method method = clazz.getMethod("initialize", Config.class, Config.class);
+            method.invoke(obj, config, runtime);
+            return obj;
+        } catch (Exception e) {
             e.printStackTrace();
         }
-
-        try {
-            stateMgr.initialize(this.config);
-            SchedulerStateManagerAdaptor stateManagerAdaptor = new SchedulerStateManagerAdaptor(stateMgr, 5000);
-
-            FileUtils.writeToFile(filename, "Current packing algorithm is: " + Context.packingClass(config));
-
-            // physcial plan
-            FileUtils.writeToFile(filename, "Before trigger scheduler, the physical plan is:");
-            PhysicalPlans.PhysicalPlan physicalPlan = stateManagerAdaptor.getPhysicalPlan(topologyName);
-            TopologyInfoUtils.getPhysicalPlanInfo(physicalPlan, filename);
-
-            // packing plan
-            FileUtils.writeToFile(filename, "Before trigger scheduler, the packing plan is:");
-            TopologyInfoUtils.printPackingInfo(packingPlan, filename);
-
-            // **************************NEED TO CUSTOM ALGORITHM START***************************
-            // config and runtime
-            FileUtils.writeToFile(filename, "Create the new Config using build new Config object with put FFDP packing algorithm...");
-            // 2018-07-03 add : ffdp algorithm resources is not avaliable
-            config = Config.newBuilder().putAll(config).put(Key.PACKING_CLASS, "com.twitter.heron.packing.binpacking.FirstFitDecreasingPacking").build();
-//        config = Config.newBuilder().putAll(config).put(Key.PACKING_CLASS, "com.twitter.heron.packing.roundrobin.RoundRobinPacking").build();
-//            outputRuntimeInfo(config);
-
-            String packingClass = Context.packingClass(config);
-            FileUtils.writeToFile(filename, "Then, packing algorithm is: " + packingClass); // there is no problem
-
-            // new packing plan
-            FileUtils.writeToFile(filename, "Create the new PackingPlan using New Packing Algorithm...");
-            PackingPlan newPackingPlan = LauncherUtils.getInstance().createPackingPlan(config, runtime);
-            FileUtils.writeToFile(filename, "Then, new packing plan info...");
-            TopologyInfoUtils.printPackingInfo(newPackingPlan, filename);
-
-            // serializer packing plan for creating updateTopologyRequest
-            FileUtils.writeToFile(filename, "Now, Update topology using updateTopologyManager...");
-//            PackingPlans.PackingPlan currentPackingPlan = serializer.toProto(packingPlan);
-            PackingPlans.PackingPlan currentPackingPlan = stateManagerAdaptor.getPackingPlan(topologyName);
-            PackingPlans.PackingPlan proposedPackingPlan = serializer.toProto(newPackingPlan);
-            // **************************NEED TO CUSTOM ALGORITHM END***************************
-
-            // 2018-07-18 add ------------------------------------------
-//            validateRuntimeManage(stateManagerAdaptor, topologyName);
-            // ---------------------------------------------------------
-
-            Config newRuntime = Config.newBuilder()
-                    .put(Key.TOPOLOGY_NAME, Context.topologyName(config))
-                    .put(Key.SCHEDULER_STATE_MANAGER_ADAPTOR, stateManagerAdaptor)
-                    .build();
-
-            // Create a ISchedulerClient basing on the config
-            ISchedulerClient schedulerClient = SchedulerUtils.getSchedulerClient(newRuntime, config);
-
-            // build updatetopologyrequest object to update topogolgy
-            Scheduler.UpdateTopologyRequest updateTopologyRequest =
-                    Scheduler.UpdateTopologyRequest.newBuilder()
-                            .setCurrentPackingPlan(currentPackingPlan)
-                            .setProposedPackingPlan(proposedPackingPlan)
-                            .build();
-
-            //
-            FileUtils.writeToFile(filename, "Sending Updating Topology request: " + updateTopologyRequest);
-            if (!schedulerClient.updateTopology(updateTopologyRequest)) {
-                throw new TopologyRuntimeManagementException(String.format(
-                        "Failed to update " + topology.getName() + " with Scheduler, updateTopologyRequest="
-                                + updateTopologyRequest));
-            }
-
-            // Clean the connection when we are done.
-            FileUtils.writeToFile(filename, "Schedule update topology successfully!!!");
-            FileUtils.writeToFile(filename, "After trigger scheduler, the physical plan is:");
-            TopologyInfoUtils.getPhysicalPlanInfo(stateManagerAdaptor.getPhysicalPlan(topologyName), filename);
-
-            FileUtils.writeToFile(filename, "-----------------TRIGGER RESCHEDULER END-----------------");
-        } finally {
-            // close zookeeper client connnection
-            SysUtils.closeIgnoringExceptions(stateMgr);
-        }
+        return null;
     }
 
     /**

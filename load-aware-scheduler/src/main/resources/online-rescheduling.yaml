@@ -1,0 +1,5 @@
+# identify the rescheduler class
+rescheduling:
+  algorithm0: zyt.custom.scheduler.aurora.algorithm.ExampleRescheduler
+  algorithm1: zyt.custom.scheduler.aurora.algorithm.DataStreamCateRescheduler
+  algorithm2: zyt.custom.scheduler.aurora.algorithm.LoadAwareRescheduler

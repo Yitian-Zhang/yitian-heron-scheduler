@@ -84,7 +84,10 @@ public class AuroraSchedulerThread extends Thread {
                     // schedulerController.triggerSchedule(packingPlan);
 
                     // invoking DSC-Heron
-                    schedulerController.hotEdgeSchedule(packingPlan);
+                    // schedulerController.hotEdgeSchedule(packingPlan);
+                    // TODO: restructure modified 1
+                    // restructure the AuroraSchedulerController at 2019-10-14
+                    schedulerController.rescheduling(packingPlan);
 
                     // invoking BW-Heron
                     // schedulerController.basedWeightSchedule(packingPlan);
@@ -117,7 +120,7 @@ public class AuroraSchedulerThread extends Thread {
                 }
                 */
                 count++;
-            } catch (SQLException | InterruptedException e) {
+            } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }
@@ -150,6 +153,7 @@ public class AuroraSchedulerThread extends Thread {
 
                     // Triggered the rescheduling...
                     System.out.println("Staring load aware scheduling in Heron...");
+                    // TODO: restructure modified 2
                     schedulerController.basedWeightSchedule(packingPlan);
 
                     // re-initial these value
