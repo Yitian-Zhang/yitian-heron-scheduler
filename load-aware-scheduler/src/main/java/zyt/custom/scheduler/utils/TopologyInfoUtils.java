@@ -1,6 +1,8 @@
 package zyt.custom.scheduler.utils;
 
 import com.twitter.heron.api.generated.TopologyAPI;
+import com.twitter.heron.api.utils.TopologyUtils;
+import com.twitter.heron.common.basics.ByteAmount;
 import com.twitter.heron.proto.system.ExecutionEnvironment;
 import com.twitter.heron.proto.system.PhysicalPlans;
 import com.twitter.heron.scheduler.TopologyRuntimeManagementException;
@@ -8,7 +10,9 @@ import com.twitter.heron.scheduler.utils.Runtime;
 import com.twitter.heron.spi.common.Config;
 import com.twitter.heron.spi.common.Context;
 import com.twitter.heron.spi.packing.PackingPlan;
+import com.twitter.heron.spi.packing.Resource;
 import com.twitter.heron.spi.statemgr.SchedulerStateManagerAdaptor;
+import zyt.custom.scheduler.Constants;
 import zyt.custom.utils.FileUtils;
 import zyt.custom.utils.Utils;
 
@@ -19,8 +23,12 @@ import java.util.*;
  */
 public class TopologyInfoUtils {
 
-    /*-------------------Get Topology Basic Info--------------------*/
+    /*-------------------Get Topology Structure Info--------------------*/
 
+
+
+
+    /*-------------------Print topology info--------------------*/
     /**
      * Print the PhysicalPlan of current topology to identified file
      *
@@ -191,6 +199,40 @@ public class TopologyInfoUtils {
      */
     public static TopologyAPI.Topology getTopology(Config runtime) {
         return Runtime.topology(runtime);
+    }
+
+
+    /*--------------------About resource functions--------------------*/
+    public static Resource getInstanceResourceFromPackingPlan(int taskId, PackingPlan packingPlan) {
+        Resource resource = null;
+        Map<Integer, PackingPlan.ContainerPlan> containerPlanMap = packingPlan.getContainersMap();
+        for (Integer containerId : containerPlanMap.keySet()) {
+            PackingPlan.ContainerPlan containerPlan = containerPlanMap.get(containerId);
+            Set<PackingPlan.InstancePlan> instancePlanSet = containerPlan.getInstances();
+            for (PackingPlan.InstancePlan instancePlan : instancePlanSet) {
+                if (instancePlan.getTaskId() == taskId) {
+                    resource = instancePlan.getResource();
+                }
+            }
+        }
+        return resource;
+    }
+
+    public static Resource getContainerResourceFromPackingPlan(int containerId, PackingPlan packingPlan) {
+        Resource resource = null;
+        Map<Integer, PackingPlan.ContainerPlan> containerPlanMap = packingPlan.getContainersMap();
+        for (Integer id : containerPlanMap.keySet()) {
+            PackingPlan.ContainerPlan containerPlan = containerPlanMap.get(id);
+            if (id == containerId) {
+                resource = containerPlan.getRequiredResource();
+            }
+        }
+        return resource;
+    }
+
+    public static ByteAmount getContainerRamPadding(List<TopologyAPI.Config.KeyValue> topologyConfig) {
+        return TopologyUtils.getConfigWithDefault(topologyConfig,
+                com.twitter.heron.api.Config.TOPOLOGY_CONTAINER_RAM_PADDING, Constants.DEFAULT_RAM_PADDING_PER_CONTAINER);
     }
 
 }
