@@ -9,6 +9,7 @@ import com.twitter.heron.proto.system.PackingPlans;
 import com.twitter.heron.proto.system.PhysicalPlans;
 import com.twitter.heron.scheduler.TopologyRuntimeManagementException;
 import com.twitter.heron.scheduler.client.ISchedulerClient;
+import com.twitter.heron.scheduler.utils.Runtime;
 import com.twitter.heron.spi.common.Config;
 import com.twitter.heron.spi.common.Context;
 import com.twitter.heron.spi.common.Key;
@@ -45,9 +46,22 @@ public class LoadAwareRescheduler implements AuroraRescheduler {
     private PackingPlanProtoSerializer serializer;
     private PackingPlanProtoDeserializer deserializer;
 
+    // addition
     private ByteAmount containerRamPadding = Constants.DEFAULT_RAM_PADDING_PER_CONTAINER;
 
 
+    public LoadAwareRescheduler() {
+
+    }
+
+    public void initialize(Config config, Config runtime) {
+        this.config = config;
+        this.runtime = runtime;
+        this.topology = Runtime.topology(this.runtime);
+        this.topologyName = Runtime.topologyName(this.runtime);
+        this.serializer = new PackingPlanProtoSerializer();
+        this.deserializer = new PackingPlanProtoDeserializer();
+    }
 
     /***************************Based Weight Scheduling Algorithm Start**************************/
     /**
@@ -701,7 +715,8 @@ public class LoadAwareRescheduler implements AuroraRescheduler {
      * @param taskLoadMap:    task -> load
      * @return load of this stmgr
      */
-    private long getLoadForStmgr(String stmgrId, Map<String, List<String>> stmgrToHostMap, Map<String, List<Integer>> newTaskToStmgr, Map<Integer, Long> taskLoadMap) {
+    private long getLoadForStmgr(String stmgrId, Map<String, List<String>> stmgrToHostMap, Map<String,
+            List<Integer>> newTaskToStmgr, Map<Integer, Long> taskLoadMap) {
         logger.info("[FUNCTION]------------GET STMGR CURRENT LOAD START------------");
         long stmgrLoad = 0l;
         String currentHostname = "";

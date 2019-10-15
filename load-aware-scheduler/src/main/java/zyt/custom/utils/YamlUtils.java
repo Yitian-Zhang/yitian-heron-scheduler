@@ -17,13 +17,6 @@ public class YamlUtils {
         }
     }
 
-    /**
-     * use static inner class  achieve singleton
-     */
-    private static class SingletonHolder {
-        private static YamlUtils instance = new YamlUtils();
-    }
-
     public static YamlUtils getInstance() {
         return SingletonHolder.instance;
     }
@@ -57,4 +50,12 @@ public class YamlUtils {
         Map<String, Object> rootProperty = properties.get(root);
         return rootProperty.getOrDefault(key, "");
     }
+
+    /**
+     * use static inner class  achieve singleton
+     */
+    private static class SingletonHolder {
+        private static YamlUtils instance = new YamlUtils();
+    }
+
 }

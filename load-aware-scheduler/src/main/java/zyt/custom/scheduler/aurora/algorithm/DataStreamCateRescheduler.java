@@ -46,7 +46,7 @@ public class DataStreamCateRescheduler implements AuroraRescheduler {
     private PackingPlanProtoSerializer serializer;
     private PackingPlanProtoDeserializer deserializer;
 
-    //
+    // addition
     private static final int TASK_NUM_PER_CONTAINER = 4;
     private ByteAmount containerRamPadding = Constants.DEFAULT_RAM_PADDING_PER_CONTAINER;
 
