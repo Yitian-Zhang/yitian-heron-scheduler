@@ -63,10 +63,9 @@ public class LoadAwareRescheduler implements AuroraRescheduler {
         this.deserializer = new PackingPlanProtoDeserializer();
     }
 
-    /***************************Based Weight Scheduling Algorithm Start**************************/
     /**
+     * Load-aware online scheduling algorithm
      * 2018-09-16 add
-     * Based weight scheduling algorithm
      *
      * @param packingPlan original packingplan
      */
@@ -385,12 +384,10 @@ public class LoadAwareRescheduler implements AuroraRescheduler {
         }
     }
 
-    /***************************Based Weight Scheduing Algorithm End**************************/
+    /*-------------------------------------------------------------------------------------------*/
+    /*-----------------------Based Weight Scheduling Algorithm Tools Start-----------------------*/
+    /*-------------------------------------------------------------------------------------------*/
 
-    /*******************************************************************************/
-    /*                 Based Weight Scheduling Algorithm Tools Start               */
-
-    /*******************************************************************************/
     // get weight of all cluster
     private Long getWeightOfCluster(Map<Integer, Long> taskLoadMap) {
         Long weight = 0l;
@@ -636,12 +633,13 @@ public class LoadAwareRescheduler implements AuroraRescheduler {
         }
         return taskIdOfMaxLoad;
     }
-    /*******************************************************************************/
-    /*                   Based Weight Scheduling Algorithm Tools End               */
-    /*******************************************************************************/
+
+    /*-----------------------------------------------------------------------------------------*/
+    /*-----------------------Based Weight Scheduling Algorithm Tools End-----------------------*/
+    /*-----------------------------------------------------------------------------------------*/
 
 
-    // common functions
+    // common functions (used in Load-aware and dsc-heron)
     private Map<String, List<String>> getStmgrToHost(PhysicalPlans.PhysicalPlan physicalPlan) {
         logger.info("[FUNCTION]--------------GET HOSTNAME -> STMGRS LIST START--------------");
         logger.info("Getting hostname from physical plan...");

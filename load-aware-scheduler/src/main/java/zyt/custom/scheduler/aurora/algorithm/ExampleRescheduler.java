@@ -25,6 +25,9 @@ import zyt.custom.scheduler.utils.TopologyInfoUtils;
 import zyt.custom.utils.FileUtils;
 
 /**
+ * Example rescheduler for displaying the process about rescheduling in Heron.
+ * Including 1-9 steps as shown following.
+ *
  * @author yitian
  */
 public class ExampleRescheduler implements AuroraRescheduler {
