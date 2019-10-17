@@ -40,10 +40,12 @@ import java.util.Random;
 import java.util.UUID;
 
 /**
- *
  * Built for testing cluster that has 4 work nodes.
- * Using in Load-aware online scheduling algorithm of Heron.
+ * Using in Load-aware online scheduling algorithm of Heron (Observation 2 Section).
  * updated: 2018-09-12
+ *
+ * Load Test:
+ * 3Spout -> 1Bolt to load one work node with one container.
  *
  * @author yitian
  */
@@ -66,8 +68,6 @@ public final class ClusterWordCountTopology {
                 .fieldsGrouping("word", new Fields("word")); // default parallelism
         Config conf = new Config();
         conf.setNumStmgrs(1); // changed this value for RR algorithm
-
-        // 2018-09-12 add for benchmark4
         conf.setMaxSpoutPending(10); // modified for latency
         conf.setMessageTimeoutSecs(600); // modified for latency
         conf.setTopologyReliabilityMode(Config.TopologyReliabilityMode.ATLEAST_ONCE); // latency shows config
@@ -78,14 +78,6 @@ public final class ClusterWordCountTopology {
         conf.setComponentRam("consumer",
                 ByteAmount.fromMegabytes(ExampleResources.COMPONENT_RAM_MB)); // 512mb
 
-        // configure container resources
-//        conf.setContainerDiskRequested(
-//                ExampleResources.getContainerDisk(2 * parallelism, parallelism)); // 2G
-//        conf.setContainerRamRequested(
-//                ExampleResources.getContainerRam(2 * parallelism, parallelism)); // 1G
-//        conf.setContainerCpuRequested(2); // 2cores
-
-        // 2018-9-10 changed it for mesos rescource allocation test
         // this configuration is the max value of an container
         conf.setContainerDiskRequested(ByteAmount.fromGigabytes(3)); // 6G
         conf.setContainerRamRequested(ByteAmount.fromGigabytes(3)); // 4G
