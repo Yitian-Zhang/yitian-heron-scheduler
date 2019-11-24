@@ -76,7 +76,6 @@ public final class FileWordCountTopology {
         conf.setContainerDiskRequested(ByteAmount.fromGigabytes(TopologyConstants.BENCHMARK_CONTAINER_DISK_REQUESTED)); // default: 3g
         conf.setContainerRamRequested(ByteAmount.fromGigabytes(TopologyConstants.BENCHMARK_CONTAINER_RAM_REQUESTED)); // default: 3g
         conf.setContainerCpuRequested(TopologyConstants.BENCHMARK_CONTAINER_CPU_REQUESTED); // default: 2
-
         conf.setNumStmgrs(TopologyConstants.BENCHMARK_STMGR_NUM);
 
         HeronSubmitter.submitTopology(name, conf, builder.createTopology());

@@ -24,7 +24,6 @@ import java.util.List;
 public class FileReader implements Serializable {
 
     private static final long serialVersionUID = -7012334600647556267L;
-
     public final String file;
     private final List<String> contents;
     private int index = 0;
