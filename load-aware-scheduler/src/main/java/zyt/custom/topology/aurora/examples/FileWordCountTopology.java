@@ -95,6 +95,7 @@ public final class FileWordCountTopology {
         @Override
         public void open(Map<String, Object> conf, TopologyContext topologyContext, SpoutOutputCollector spoutOutputCollector) {
             collector = spoutOutputCollector;
+            fileReader = new FileReader(TXT_FILE);
         }
 
         public String generateUUID() {
